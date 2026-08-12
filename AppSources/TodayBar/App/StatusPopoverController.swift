@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import SwiftUI
 
 private final class TodayPanel: NSPanel {
@@ -11,6 +12,7 @@ final class StatusPopoverController: NSObject {
     private let panelSize = NSSize(width: 420, height: 590)
     private let statusItem: NSStatusItem
     private let panel: TodayPanel
+    private let launchAtStartupController = LaunchAtStartupController()
     private var trackingArea: NSTrackingArea?
     private var closeWorkItem: DispatchWorkItem?
     private var outsideClickMonitor: Any?
@@ -106,6 +108,17 @@ final class StatusPopoverController: NSObject {
         closePanel()
 
         let menu = NSMenu()
+
+        let launchAtStartupItem = NSMenuItem(
+            title: "Launch at Startup",
+            action: #selector(toggleLaunchAtStartup),
+            keyEquivalent: ""
+        )
+        launchAtStartupItem.target = self
+        launchAtStartupItem.state = launchAtStartupController.isEnabled ? .on : .off
+        menu.addItem(launchAtStartupItem)
+        menu.addItem(.separator())
+
         let quitItem = NSMenuItem(
             title: "Завершить Today",
             action: #selector(quitApplication),
@@ -122,6 +135,21 @@ final class StatusPopoverController: NSObject {
 
     @objc private func quitApplication() {
         NSApplication.shared.terminate(nil)
+    }
+
+    @objc private func toggleLaunchAtStartup() {
+        do {
+            if try launchAtStartupController.toggle() == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+            }
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .warning
+            alert.messageText = "Не удалось изменить автозапуск"
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
     }
 
     @objc func mouseEntered(with event: NSEvent) {
