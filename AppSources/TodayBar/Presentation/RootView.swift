@@ -39,7 +39,7 @@ struct RootView: View {
 
             footer
         }
-        .frame(width: 400, height: 548)
+        .frame(width: 420, height: 590)
         .background(TodayPalette.surface)
         .onHover(perform: hoverChanged)
     }
@@ -49,17 +49,17 @@ struct RootView: View {
             Image(systemName: "checkmark")
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 34, height: 34)
-                .background(TodayPalette.hover, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .background(TodayPalette.hover, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .stroke(TodayPalette.line, lineWidth: 0.5)
                 }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Сегодня")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 21, weight: .semibold))
                 Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                    .font(.system(size: 12.5))
+                    .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
 
@@ -87,36 +87,41 @@ struct RootView: View {
     }
 
     private var tabs: some View {
-        HStack(spacing: 20) {
-            ForEach(Section.allCases) { item in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        section = item
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(item.rawValue)
-                        if item == .today {
-                            Text("\(model.todayPending.count)")
-                                .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(Section.allCases) { item in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            section = item
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(item.rawValue)
+                            if item == .today {
+                                Text("\(model.todayPending.count)")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.system(size: 15, weight: section == item ? .medium : .regular))
+                        .frame(maxWidth: .infinity, minHeight: 34)
+                        .contentShape(Rectangle())
+                        .overlay(alignment: .bottom) {
+                            if section == item {
+                                Rectangle()
+                                    .fill(Color.primary)
+                                    .frame(height: 2)
+                            }
                         }
                     }
-                    .font(.system(size: 13.5, weight: section == item ? .medium : .regular))
-                    .frame(height: 34)
-                    .overlay(alignment: .bottom) {
-                        if section == item {
-                            Rectangle()
-                                .fill(Color.primary)
-                                .frame(height: 2)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(section == item ? .primary : .secondary)
+                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(section == item ? .primary : .secondary)
             }
+            .frame(maxWidth: .infinity)
 
-            Spacer()
             progress
+                .fixedSize()
         }
         .padding(.horizontal, 19)
         .overlay(alignment: .bottom) {
@@ -137,7 +142,7 @@ struct RootView: View {
             .frame(width: 42, height: 3)
 
             Text("\(model.todayCompleted.count) из \(todayTotal)")
-                .font(.system(size: 11.5))
+                .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
         }
@@ -159,7 +164,7 @@ struct RootView: View {
             Spacer()
             Text("Today")
         }
-        .font(.system(size: 11.5))
+        .font(.system(size: 13))
         .foregroundStyle(.secondary)
         .padding(.horizontal, 17)
         .frame(height: 34)
