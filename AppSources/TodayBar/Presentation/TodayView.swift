@@ -56,7 +56,7 @@ struct TodayView: View {
                 Text("\(model.todayCompleted.count)")
                     .monospacedDigit()
             }
-            .font(.system(size: 12.5))
+            .font(.system(size: 14))
             .foregroundStyle(.secondary)
             .padding(.horizontal, 8)
             .frame(height: 30)
@@ -80,7 +80,7 @@ struct TodayView: View {
                     placeholder: "Новое дело…",
                     minHeight: 38,
                     maxHeight: 112,
-                    font: .systemFont(ofSize: 14.5),
+                    font: .systemFont(ofSize: 16),
                     onCommandSubmit: addTask,
                     onFocusChange: { isComposerFocused = $0 }
                 )
@@ -101,15 +101,14 @@ struct TodayView: View {
             }
             .padding(.horizontal, 11)
             .padding(.vertical, 9)
-            .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(isComposerFocused ? TodayPalette.accent.opacity(0.65) : TodayPalette.border, lineWidth: 0.7)
             }
-            .shadow(color: .black.opacity(0.045), radius: 10, y: 4)
 
             Text("Enter — новая строка · ⌘↵ — добавить")
-                .font(.system(size: 11))
+                .font(.system(size: 12.5))
                 .foregroundStyle(.secondary)
                 .padding(.trailing, 2)
         }
@@ -133,9 +132,9 @@ private struct EmptyTodayView: View {
                 .font(.system(size: 22, weight: .regular))
                 .foregroundStyle(.secondary)
             Text("На сегодня дел нет")
-                .font(.system(size: 14.5, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
             Text("Добавьте первое дело ниже")
-                .font(.system(size: 12))
+                .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

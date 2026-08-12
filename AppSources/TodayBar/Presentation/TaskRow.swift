@@ -20,7 +20,7 @@ struct TaskRow: View {
 
             if task.isCompleted {
                 Text(task.title)
-                    .font(.system(size: 14.5))
+                    .font(.system(size: 16))
                     .foregroundStyle(.secondary)
                     .strikethrough(true, color: .secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -33,7 +33,7 @@ struct TaskRow: View {
                     height: $editorHeight,
                     placeholder: "Название дела",
                     minHeight: 22,
-                    font: .systemFont(ofSize: 14.5),
+                    font: .systemFont(ofSize: 16),
                     onCommandSubmit: finishEditing,
                     onFocusChange: { focused in
                         isEditing = focused
@@ -67,9 +67,9 @@ struct TaskRow: View {
         .frame(minHeight: 38)
         .background(
             isHovered ? TodayPalette.hover : .clear,
-            in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+            in: RoundedRectangle(cornerRadius: 10, style: .continuous)
         )
-        .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .onHover { isHovered = $0 }
         .onChange(of: task.title) { value in
             if title != value { title = value }

@@ -1,20 +1,43 @@
 import AppKit
 import SwiftUI
 
+private final class TodayPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { false }
+}
+
 @MainActor
-final class StatusPopoverController: NSObject, NSPopoverDelegate {
+final class StatusPopoverController: NSObject {
+    private let panelSize = NSSize(width: 420, height: 590)
     private let statusItem: NSStatusItem
-    private let popover: NSPopover
+    private let panel: TodayPanel
     private var trackingArea: NSTrackingArea?
     private var closeWorkItem: DispatchWorkItem?
-    private var isPointerInsidePopover = false
+    private var outsideClickMonitor: Any?
+    private var isPointerInsidePanel = false
     private var isPinned = false
 
     init(model: TaskListViewModel) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        popover = NSPopover()
+        panel = TodayPanel(
+            contentRect: NSRect(origin: .zero, size: panelSize),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
         super.init()
 
+        configureStatusItem()
+        configurePanel(model: model)
+    }
+
+    deinit {
+        if let outsideClickMonitor {
+            NSEvent.removeMonitor(outsideClickMonitor)
+        }
+    }
+
+    private func configureStatusItem() {
         guard let button = statusItem.button else { return }
         button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Today — список дел")
         button.imagePosition = .imageOnly
@@ -30,44 +53,57 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
         )
         button.addTrackingArea(tracking)
         trackingArea = tracking
+    }
 
-        popover.behavior = .semitransient
-        popover.animates = true
-        popover.delegate = self
-        popover.contentSize = NSSize(width: 400, height: 548)
-        popover.contentViewController = NSHostingController(
+    private func configurePanel(model: TaskListViewModel) {
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.level = .popUpMenu
+        panel.collectionBehavior = [.transient, .moveToActiveSpace, .fullScreenAuxiliary]
+        panel.animationBehavior = .utilityWindow
+        panel.hidesOnDeactivate = false
+
+        let hostingController = NSHostingController(
             rootView: RootView(model: model) { [weak self] isInside in
-                self?.popoverHoverChanged(isInside)
+                self?.panelHoverChanged(isInside)
             }
         )
+        panel.contentViewController = hostingController
+
+        let contentView = hostingController.view
+        contentView.wantsLayer = true
+        contentView.layer?.cornerRadius = 34
+        contentView.layer?.cornerCurve = .continuous
+        contentView.layer?.masksToBounds = true
     }
 
     @objc private func statusItemPressed() {
         if NSApp.currentEvent?.type == .rightMouseUp {
             showContextMenu()
         } else {
-            togglePopover()
+            togglePanel()
         }
     }
 
-    private func togglePopover() {
-        if popover.isShown {
+    private func togglePanel() {
+        if panel.isVisible {
             if isPinned {
                 isPinned = false
-                closePopover()
+                closePanel()
             } else {
                 isPinned = true
                 cancelScheduledClose()
             }
         } else {
             isPinned = true
-            showPopover()
+            showPanel()
         }
     }
 
     private func showContextMenu() {
         isPinned = false
-        closePopover()
+        closePanel()
 
         let menu = NSMenu()
         let quitItem = NSMenuItem(
@@ -89,30 +125,54 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     }
 
     @objc func mouseEntered(with event: NSEvent) {
-        showPopover()
+        showPanel()
     }
 
     @objc func mouseExited(with event: NSEvent) {
         scheduleClose()
     }
 
-    private func showPopover() {
+    private func showPanel() {
         cancelScheduledClose()
-        guard !popover.isShown, let button = statusItem.button else { return }
-        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        popover.contentViewController?.view.window?.makeKey()
+        guard !panel.isVisible else { return }
+
+        positionPanel()
+        panel.alphaValue = 0
+        panel.makeKeyAndOrderFront(nil)
+        installOutsideClickMonitor()
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.14
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            panel.animator().alphaValue = 1
+        }
     }
 
-    private func popoverHoverChanged(_ isInside: Bool) {
-        isPointerInsidePopover = isInside
+    private func positionPanel() {
+        guard let button = statusItem.button, let statusWindow = button.window else { return }
+        let buttonRectInWindow = button.convert(button.bounds, to: nil)
+        let buttonFrame = statusWindow.convertToScreen(buttonRectInWindow)
+        let screenFrame = statusWindow.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
+
+        var origin = NSPoint(
+            x: buttonFrame.midX - panelSize.width / 2,
+            y: buttonFrame.minY - panelSize.height - 8
+        )
+        origin.x = min(max(origin.x, screenFrame.minX + 8), screenFrame.maxX - panelSize.width - 8)
+        origin.y = max(origin.y, screenFrame.minY + 8)
+        panel.setFrame(NSRect(origin: origin, size: panelSize), display: true)
+    }
+
+    private func panelHoverChanged(_ isInside: Bool) {
+        isPointerInsidePanel = isInside
         isInside ? cancelScheduledClose() : scheduleClose()
     }
 
     private func scheduleClose() {
         cancelScheduledClose()
         let workItem = DispatchWorkItem { [weak self] in
-            guard let self, !self.isPinned, !self.isPointerInsidePopover, !self.isPointerOverStatusButton else { return }
-            self.closePopover()
+            guard let self, !self.isPinned, !self.isPointerInsidePanel, !self.isPointerOverStatusButton else { return }
+            self.closePanel()
         }
         closeWorkItem = workItem
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: workItem)
@@ -126,17 +186,36 @@ final class StatusPopoverController: NSObject, NSPopoverDelegate {
     private var isPointerOverStatusButton: Bool {
         guard let button = statusItem.button, let window = button.window else { return false }
         let frameInWindow = button.convert(button.bounds, to: nil)
-        let frameOnScreen = window.convertToScreen(frameInWindow)
-        return frameOnScreen.contains(NSEvent.mouseLocation)
+        return window.convertToScreen(frameInWindow).contains(NSEvent.mouseLocation)
     }
 
-    private func closePopover() {
+    private func installOutsideClickMonitor() {
+        guard outsideClickMonitor == nil else { return }
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            Task { @MainActor in
+                guard let self,
+                      self.panel.isVisible,
+                      !self.panel.frame.contains(NSEvent.mouseLocation),
+                      !self.isPointerOverStatusButton else { return }
+                self.isPinned = false
+                self.closePanel()
+            }
+        }
+    }
+
+    private func removeOutsideClickMonitor() {
+        guard let outsideClickMonitor else { return }
+        NSEvent.removeMonitor(outsideClickMonitor)
+        self.outsideClickMonitor = nil
+    }
+
+    private func closePanel() {
         cancelScheduledClose()
-        popover.performClose(nil)
-    }
-
-    func popoverDidClose(_ notification: Notification) {
-        isPointerInsidePopover = false
+        guard panel.isVisible else { return }
+        panel.orderOut(nil)
+        panel.alphaValue = 1
+        isPointerInsidePanel = false
         isPinned = false
+        removeOutsideClickMonitor()
     }
 }

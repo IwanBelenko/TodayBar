@@ -44,9 +44,9 @@ struct HistoryView: View {
                 .font(.system(size: 21))
                 .foregroundStyle(.secondary)
             Text("История пуста")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
             Text("Завершённые дела сохранятся здесь")
-                .font(.system(size: 11))
+                .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -56,7 +56,7 @@ struct HistoryView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(historyDate(date))
-                    .font(.system(size: 12.5, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                 Spacer()
                 Text("\(tasks.count)")
                     .monospacedDigit()
@@ -87,7 +87,7 @@ struct HistoryView: View {
             Button("Очистить") { confirmClear = true }
                 .buttonStyle(.plain)
         }
-        .font(.system(size: 11.5))
+        .font(.system(size: 13))
         .foregroundStyle(.secondary)
         .padding(.horizontal, 17)
         .frame(height: 36)
@@ -117,7 +117,7 @@ private struct HistoryRow: View {
                 .padding(.top, 1)
 
             Text(task.title)
-                .font(.system(size: 14))
+                .font(.system(size: 15.5))
                 .foregroundStyle(.secondary)
                 .strikethrough(true, color: .secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -125,7 +125,7 @@ private struct HistoryRow: View {
 
             if let date = task.completedAt {
                 Text(date.formatted(date: .omitted, time: .shortened))
-                    .font(.system(size: 11.5))
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
