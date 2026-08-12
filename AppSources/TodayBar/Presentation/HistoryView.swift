@@ -120,8 +120,14 @@ private struct HistoryRow: View {
                 .font(.system(size: 15.5))
                 .foregroundStyle(.secondary)
                 .strikethrough(true, color: .secondary)
+                .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .contextMenu {
+                    Button("Скопировать задачу") {
+                        TaskClipboard.copy(task.title)
+                    }
+                }
 
             if let date = task.completedAt {
                 Text(date.formatted(date: .omitted, time: .shortened))

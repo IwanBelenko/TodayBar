@@ -2,9 +2,12 @@ import AppKit
 import SwiftUI
 
 private final class PlaceholderTextView: NSTextView {
+    private static let copyEntireTextMenuTag = 47_021
+
     var placeholderText = "" {
         didSet { needsDisplay = true }
     }
+    var offersCopyEntireText = false
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
@@ -20,6 +23,29 @@ private final class PlaceholderTextView: NSTextView {
         )
         placeholderText.draw(at: origin, withAttributes: attributes)
     }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event) ?? NSMenu()
+        guard offersCopyEntireText,
+              menu.item(withTag: Self.copyEntireTextMenuTag) == nil else { return menu }
+
+        if !menu.items.isEmpty {
+            menu.addItem(.separator())
+        }
+        let item = NSMenuItem(
+            title: "Скопировать задачу целиком",
+            action: #selector(copyEntireText(_:)),
+            keyEquivalent: ""
+        )
+        item.target = self
+        item.tag = Self.copyEntireTextMenuTag
+        menu.addItem(item)
+        return menu
+    }
+
+    @objc private func copyEntireText(_ sender: Any?) {
+        TaskClipboard.copy(string)
+    }
 }
 
 struct AutoGrowingTextEditor: NSViewRepresentable {
@@ -30,6 +56,7 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
     var minHeight: CGFloat = 22
     var maxHeight: CGFloat?
     var font: NSFont = .systemFont(ofSize: 13)
+    var offersCopyEntireText = false
     var onCommandSubmit: () -> Void = {}
     var onFocusChange: (Bool) -> Void = { _ in }
 
@@ -61,6 +88,7 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         textView.textContainer?.widthTracksTextView = true
         textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         textView.placeholderText = placeholder
+        textView.offersCopyEntireText = offersCopyEntireText
         textView.string = text
 
         scrollView.documentView = textView
@@ -77,7 +105,10 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
 
         textView.font = font
-        (textView as? PlaceholderTextView)?.placeholderText = placeholder
+        if let textView = textView as? PlaceholderTextView {
+            textView.placeholderText = placeholder
+            textView.offersCopyEntireText = offersCopyEntireText
+        }
         if textView.string != text {
             textView.string = text
         }
