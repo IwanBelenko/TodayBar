@@ -22,7 +22,7 @@ struct TaskRow: View {
                 Text(task.title)
                     .font(.system(size: 16))
                     .foregroundStyle(.secondary)
-                    .strikethrough(true, color: .secondary)
+                    .strikethrough(true, color: Color.secondary.opacity(0.9))
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -90,9 +90,9 @@ struct TaskRow: View {
             }
         } label: {
             ZStack {
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                Circle()
                     .fill(task.isCompleted ? TodayPalette.accent : .clear)
-                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                Circle()
                     .stroke(task.isCompleted ? TodayPalette.accent : Color.secondary.opacity(0.75), lineWidth: 1.2)
                 if task.isCompleted {
                     Image(systemName: "checkmark")
@@ -100,7 +100,7 @@ struct TaskRow: View {
                         .foregroundStyle(.white)
                 }
             }
-            .frame(width: 17, height: 17)
+            .frame(width: 18, height: 18)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
