@@ -87,36 +87,41 @@ struct RootView: View {
     }
 
     private var tabs: some View {
-        HStack(spacing: 20) {
-            ForEach(Section.allCases) { item in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        section = item
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Text(item.rawValue)
-                        if item == .today {
-                            Text("\(model.todayPending.count)")
-                                .foregroundStyle(.secondary)
+        HStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(Section.allCases) { item in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            section = item
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(item.rawValue)
+                            if item == .today {
+                                Text("\(model.todayPending.count)")
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .font(.system(size: 15, weight: section == item ? .medium : .regular))
+                        .frame(maxWidth: .infinity, minHeight: 34)
+                        .contentShape(Rectangle())
+                        .overlay(alignment: .bottom) {
+                            if section == item {
+                                Rectangle()
+                                    .fill(Color.primary)
+                                    .frame(height: 2)
+                            }
                         }
                     }
-                    .font(.system(size: 15, weight: section == item ? .medium : .regular))
-                    .frame(height: 34)
-                    .overlay(alignment: .bottom) {
-                        if section == item {
-                            Rectangle()
-                                .fill(Color.primary)
-                                .frame(height: 2)
-                        }
-                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(section == item ? .primary : .secondary)
+                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(section == item ? .primary : .secondary)
             }
+            .frame(maxWidth: .infinity)
 
-            Spacer()
             progress
+                .fixedSize()
         }
         .padding(.horizontal, 19)
         .overlay(alignment: .bottom) {
