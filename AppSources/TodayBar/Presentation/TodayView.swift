@@ -17,6 +17,7 @@ struct TodayView: View {
                     } else {
                         ForEach(model.todayPending) { task in
                             TaskRow(task: task, model: model)
+                                .id(taskRowID(for: task))
                         }
 
                         if !model.todayCompleted.isEmpty {
@@ -26,6 +27,7 @@ struct TodayView: View {
                             if showsCompleted {
                                 ForEach(model.todayCompleted) { task in
                                     TaskRow(task: task, model: model)
+                                        .id(taskRowID(for: task))
                                 }
                             }
                         }
@@ -122,6 +124,10 @@ struct TodayView: View {
         model.add(title: cleaned)
         newTask = ""
         composerHeight = 38
+    }
+
+    private func taskRowID(for task: TodoItem) -> String {
+        "\(task.id.uuidString)-\(task.isCompleted ? "completed" : "pending")"
     }
 }
 
