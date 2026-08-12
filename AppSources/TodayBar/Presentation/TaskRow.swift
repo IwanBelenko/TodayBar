@@ -23,10 +23,16 @@ struct TaskRow: View {
                     .font(.system(size: 16))
                     .foregroundStyle(.secondary)
                     .strikethrough(true, color: .secondary)
+                    .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 1)
                     .transition(.opacity)
+                    .contextMenu {
+                        Button("Скопировать задачу") {
+                            TaskClipboard.copy(task.title)
+                        }
+                    }
             } else {
                 AutoGrowingTextEditor(
                     text: $title,
@@ -34,6 +40,7 @@ struct TaskRow: View {
                     placeholder: "Название дела",
                     minHeight: 22,
                     font: .systemFont(ofSize: 16),
+                    offersCopyEntireText: true,
                     onCommandSubmit: finishEditing,
                     onFocusChange: { focused in
                         isEditing = focused
