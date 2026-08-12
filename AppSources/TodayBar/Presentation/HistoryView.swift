@@ -68,7 +68,7 @@ struct HistoryView: View {
             }
 
             ForEach(Array(tasks.enumerated()), id: \.element.id) { index, task in
-                HistoryRow(task: task)
+                HistoryRow(task: task, model: model)
                 if index < tasks.count - 1 {
                     Rectangle()
                         .fill(TodayPalette.line)
@@ -106,6 +106,7 @@ struct HistoryView: View {
 
 private struct HistoryRow: View {
     let task: TodoItem
+    @ObservedObject var model: TaskListViewModel
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -116,18 +117,27 @@ private struct HistoryRow: View {
                 .background(TodayPalette.accent, in: Circle())
                 .padding(.top, 1)
 
-            Text(task.title)
-                .font(.system(size: 15.5))
-                .foregroundStyle(.secondary)
-                .strikethrough(true, color: Color.secondary.opacity(0.9))
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contextMenu {
-                    Button("Скопировать задачу") {
-                        TaskClipboard.copy(task.title)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.title)
+                    .font(.system(size: 15.5))
+                    .foregroundStyle(.secondary)
+                    .strikethrough(true, color: Color.secondary.opacity(0.9))
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contextMenu {
+                        Button("Скопировать задачу") {
+                            TaskClipboard.copy(task.title)
+                        }
                     }
+
+                if let category = model.category(for: task.categoryID) {
+                    Label(category.name, systemImage: category.systemImage)
+                        .font(.system(size: 11.5))
+                        .foregroundStyle(.secondary)
                 }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             if let date = task.completedAt {
                 Text(date.formatted(date: .omitted, time: .shortened))

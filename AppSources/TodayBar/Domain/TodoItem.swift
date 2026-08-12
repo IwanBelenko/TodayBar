@@ -5,6 +5,8 @@ struct TodoItem: Codable, Identifiable, Equatable {
     var title: String
     let createdAt: Date
     var scheduledFor: Date
+    var categoryID: UUID?
+    var dueDate: Date?
     var completedAt: Date?
     var updatedAt: Date
 
@@ -15,6 +17,8 @@ struct TodoItem: Codable, Identifiable, Equatable {
         title: String,
         createdAt: Date = Date(),
         scheduledFor: Date = Date(),
+        categoryID: UUID? = nil,
+        dueDate: Date? = nil,
         completedAt: Date? = nil,
         updatedAt: Date = Date()
     ) {
@@ -22,6 +26,8 @@ struct TodoItem: Codable, Identifiable, Equatable {
         self.title = title
         self.createdAt = createdAt
         self.scheduledFor = scheduledFor
+        self.categoryID = categoryID
+        self.dueDate = dueDate
         self.completedAt = completedAt
         self.updatedAt = updatedAt
     }

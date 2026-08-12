@@ -160,12 +160,17 @@ struct RootView: View {
 
     private var footer: some View {
         HStack {
-            Label("На этом Mac", systemImage: "lock")
+            if model.overdueCount > 0 {
+                Label("Просрочено: \(model.overdueCount)", systemImage: "exclamationmark.circle.fill")
+                    .foregroundStyle(.red)
+            } else {
+                Label("На этом Mac", systemImage: "lock")
+            }
             Spacer()
             Text("Today")
         }
         .font(.system(size: 13))
-        .foregroundStyle(.secondary)
+        .foregroundStyle(model.overdueCount > 0 ? Color.primary : Color.secondary)
         .padding(.horizontal, 17)
         .frame(height: 34)
         .overlay(alignment: .top) {
