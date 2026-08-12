@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [main, "agent/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  universal-macos-app:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: ./scripts/build-app.sh
+
+      - name: Package app
+        run: ditto -c -k --sequesterRsrc --keepParent dist/Today.app Today-universal.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Today-universal
+          path: Today-universal.zip
