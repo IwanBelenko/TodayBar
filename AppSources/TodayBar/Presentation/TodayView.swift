@@ -6,26 +6,44 @@ struct TodayView: View {
     @State private var composerHeight: CGFloat = 38
     @State private var isComposerFocused = false
     @State private var showsCompleted = true
+    @State private var selectedCategoryID: UUID?
+    @State private var composerCategoryID: UUID? = TaskCategory.personalID
+    @State private var dueDate: Date?
+    @State private var showsDeadlinePicker = false
+    @State private var showsNewCategory = false
+    @State private var newCategoryName = ""
+    @State private var categoryToDelete: TaskCategory?
+    @State private var showsDeleteCategoryConfirmation = false
+
+    private var pendingTasks: [TodoItem] {
+        model.todayPending.filter { selectedCategoryID == nil || $0.categoryID == selectedCategoryID }
+    }
+
+    private var completedTasks: [TodoItem] {
+        model.todayCompleted.filter { selectedCategoryID == nil || $0.categoryID == selectedCategoryID }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
+            categoryBar
+
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    if model.todayPending.isEmpty && model.todayCompleted.isEmpty {
+                    if pendingTasks.isEmpty && completedTasks.isEmpty {
                         EmptyTodayView()
                             .padding(.top, 72)
                     } else {
-                        ForEach(model.todayPending) { task in
+                        ForEach(pendingTasks) { task in
                             TaskRow(task: task, model: model)
                                 .id(taskRowID(for: task))
                         }
 
-                        if !model.todayCompleted.isEmpty {
+                        if !completedTasks.isEmpty {
                             completedToggle
                                 .padding(.top, 8)
 
                             if showsCompleted {
-                                ForEach(model.todayCompleted) { task in
+                                ForEach(completedTasks) { task in
                                     TaskRow(task: task, model: model)
                                         .id(taskRowID(for: task))
                                 }
@@ -35,12 +53,80 @@ struct TodayView: View {
                 }
                 .padding(.horizontal, 11)
                 .padding(.vertical, 10)
-                .animation(.easeInOut(duration: 0.18), value: model.todayPending.map(\.id))
-                .animation(.easeInOut(duration: 0.18), value: model.todayCompleted.map(\.id))
+                .animation(.easeInOut(duration: 0.18), value: pendingTasks.map(\.id))
+                .animation(.easeInOut(duration: 0.18), value: completedTasks.map(\.id))
             }
 
             composer
         }
+        .alert("Новый раздел", isPresented: $showsNewCategory) {
+            TextField("Название", text: $newCategoryName)
+            Button("Отмена", role: .cancel) { newCategoryName = "" }
+            Button("Добавить") { addCategory() }
+        } message: {
+            Text("Например: Учёба, Дом или Покупки")
+        }
+        .alert("Удалить раздел?", isPresented: $showsDeleteCategoryConfirmation, presenting: categoryToDelete) { category in
+            Button("Отмена", role: .cancel) { categoryToDelete = nil }
+            Button("Удалить", role: .destructive) { deleteCategory(category) }
+        } message: { category in
+            Text("Задачи из «\(category.name)» останутся в списке без раздела.")
+        }
+    }
+
+    private var categoryBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                categoryChip(title: "Все", icon: "tray", id: nil)
+
+                ForEach(model.categories) { category in
+                    categoryChip(title: category.name, icon: category.systemImage, id: category.id)
+                        .contextMenu {
+                            if category.id != TaskCategory.workID && category.id != TaskCategory.personalID {
+                                Button("Удалить раздел", role: .destructive) {
+                                    categoryToDelete = category
+                                    showsDeleteCategoryConfirmation = true
+                                }
+                            }
+                        }
+                }
+
+                Button {
+                    showsNewCategory = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .semibold))
+                        .frame(width: 27, height: 27)
+                        .background(TodayPalette.hover, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .help("Новый раздел")
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(TodayPalette.line).frame(height: 0.5)
+        }
+    }
+
+    private func categoryChip(title: String, icon: String, id: UUID?) -> some View {
+        let selected = selectedCategoryID == id
+        return Button {
+            selectedCategoryID = id
+            if let id { composerCategoryID = id }
+        } label: {
+            Label(title, systemImage: icon)
+                .font(.system(size: 12.5, weight: selected ? .medium : .regular))
+                .padding(.horizontal, 10)
+                .frame(height: 27)
+                .background(selected ? TodayPalette.hover : Color.clear, in: Capsule())
+                .overlay {
+                    Capsule().stroke(selected ? TodayPalette.border : Color.clear, lineWidth: 0.6)
+                }
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(selected ? .primary : .secondary)
     }
 
     private var completedToggle: some View {
@@ -55,7 +141,7 @@ struct TodayView: View {
                     .rotationEffect(.degrees(showsCompleted ? 0 : -90))
                 Text("Выполнено")
                 Spacer()
-                Text("\(model.todayCompleted.count)")
+                Text("\(completedTasks.count)")
                     .monospacedDigit()
             }
             .font(.system(size: 14))
@@ -69,7 +155,7 @@ struct TodayView: View {
     }
 
     private var composer: some View {
-        VStack(alignment: .trailing, spacing: 5) {
+        VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 9) {
                 Image(systemName: "plus")
                     .font(.system(size: 12, weight: .medium))
@@ -101,29 +187,87 @@ struct TodayView: View {
                 .padding(.top, 1)
                 .accessibilityLabel("Добавить дело")
             }
-            .padding(.horizontal, 11)
-            .padding(.vertical, 9)
-            .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(isComposerFocused ? TodayPalette.accent.opacity(0.65) : TodayPalette.border, lineWidth: 0.7)
-            }
+            .padding(.horizontal, 13)
+            .padding(.top, 11)
+            .padding(.bottom, 8)
 
-            Text("Enter — новая строка · ⌘↵ — добавить")
-                .font(.system(size: 12.5))
-                .foregroundStyle(.secondary)
-                .padding(.trailing, 2)
+            Rectangle()
+                .fill(TodayPalette.line)
+                .frame(height: 0.5)
+                .padding(.horizontal, 12)
+
+            HStack(spacing: 8) {
+                Menu {
+                    Button("Без раздела") { composerCategoryID = nil }
+                    Divider()
+                    ForEach(model.categories) { category in
+                        Button(category.name) { composerCategoryID = category.id }
+                    }
+                } label: {
+                    Label(
+                        model.category(for: composerCategoryID)?.name ?? "Без раздела",
+                        systemImage: model.category(for: composerCategoryID)?.systemImage ?? "tray"
+                    )
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+
+                Button {
+                    showsDeadlinePicker = true
+                } label: {
+                    if let dueDate {
+                        TaskDueDateLabel(dueDate: dueDate, isCompleted: false)
+                    } else {
+                        Label("Добавить срок", systemImage: "calendar.badge.plus")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showsDeadlinePicker, arrowEdge: .bottom) {
+                    DeadlinePickerView(dueDate: $dueDate)
+                }
+
+                Spacer()
+
+                Text("⌘↵ добавить")
+                    .foregroundStyle(.secondary)
+            }
+            .font(.system(size: 12))
+            .padding(.horizontal, 13)
+            .frame(height: 38)
+        }
+        .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(isComposerFocused ? TodayPalette.accent.opacity(0.65) : TodayPalette.border, lineWidth: 0.7)
         }
         .padding(.horizontal, 14)
-        .padding(.bottom, 11)
+        .padding(.top, 8)
+        .padding(.bottom, 15)
     }
 
     private func addTask() {
         let cleaned = newTask.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty else { return }
-        model.add(title: cleaned)
+        model.add(title: cleaned, categoryID: composerCategoryID, dueDate: dueDate)
         newTask = ""
+        dueDate = nil
         composerHeight = 38
+    }
+
+    private func addCategory() {
+        if let category = model.addCategory(named: newCategoryName) {
+            selectedCategoryID = category.id
+            composerCategoryID = category.id
+        }
+        newCategoryName = ""
+    }
+
+    private func deleteCategory(_ category: TaskCategory) {
+        model.deleteCategory(id: category.id)
+        if selectedCategoryID == category.id { selectedCategoryID = nil }
+        if composerCategoryID == category.id { composerCategoryID = nil }
+        categoryToDelete = nil
     }
 
     private func taskRowID(for task: TodoItem) -> String {

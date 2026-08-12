@@ -8,7 +8,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.setActivationPolicy(.accessory)
         configureMainMenu()
         let repository = JSONTaskRepository()
-        let model = TaskListViewModel(repository: repository)
+        let categoryRepository = JSONCategoryRepository()
+        let reminderScheduler = NotificationReminderScheduler()
+        let model = TaskListViewModel(
+            repository: repository,
+            categoryRepository: categoryRepository,
+            reminderScheduler: reminderScheduler
+        )
         statusController = StatusPopoverController(model: model)
     }
 
