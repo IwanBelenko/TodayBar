@@ -8,6 +8,23 @@ private final class PlaceholderTextView: NSTextView {
         didSet { needsDisplay = true }
     }
     var offersCopyEntireText = false
+    var onCommandSubmit: (() -> Void)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if handlesSubmit(event) {
+            onCommandSubmit?()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if handlesSubmit(event) {
+            onCommandSubmit?()
+            return
+        }
+        super.keyDown(with: event)
+    }
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
@@ -45,6 +62,12 @@ private final class PlaceholderTextView: NSTextView {
 
     @objc private func copyEntireText(_ sender: Any?) {
         TaskClipboard.copy(string)
+    }
+
+    private func handlesSubmit(_ event: NSEvent) -> Bool {
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        let isReturn = event.keyCode == 36 || event.keyCode == 76 || event.charactersIgnoringModifiers == "\r"
+        return isReturn && !modifiers.contains(.shift)
     }
 }
 
@@ -89,6 +112,9 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         textView.placeholderText = placeholder
         textView.offersCopyEntireText = offersCopyEntireText
+        textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
+            coordinator?.submit()
+        }
         textView.string = text
 
         scrollView.documentView = textView
@@ -108,6 +134,9 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         if let textView = textView as? PlaceholderTextView {
             textView.placeholderText = placeholder
             textView.offersCopyEntireText = offersCopyEntireText
+            textView.onCommandSubmit = { [weak coordinator = context.coordinator] in
+                coordinator?.submit()
+            }
         }
         if textView.string != text {
             textView.string = text
@@ -142,13 +171,21 @@ struct AutoGrowingTextEditor: NSViewRepresentable {
         }
 
         func textView(_ textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-            guard commandSelector == #selector(NSResponder.insertNewline(_:)),
-                  NSApp.currentEvent?.modifierFlags.contains(.command) == true else {
+            let newlineCommands = [
+                #selector(NSResponder.insertNewline(_:)),
+                #selector(NSResponder.insertNewlineIgnoringFieldEditor(_:))
+            ]
+            guard newlineCommands.contains(commandSelector),
+                  NSApp.currentEvent?.modifierFlags.contains(.shift) != true else {
                 return false
             }
 
-            parent.onCommandSubmit()
+            submit()
             return true
+        }
+
+        func submit() {
+            parent.onCommandSubmit()
         }
 
         func recalculateHeight(for textView: NSTextView) {

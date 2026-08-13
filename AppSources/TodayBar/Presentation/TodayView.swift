@@ -196,7 +196,7 @@ struct TodayView: View {
                 .frame(height: 0.5)
                 .padding(.horizontal, 12)
 
-            HStack(spacing: 8) {
+            HStack(spacing: 7) {
                 Menu {
                     Button("Без раздела") { composerCategoryID = nil }
                     Divider()
@@ -204,23 +204,39 @@ struct TodayView: View {
                         Button(category.name) { composerCategoryID = category.id }
                     }
                 } label: {
-                    Label(
-                        model.category(for: composerCategoryID)?.name ?? "Без раздела",
-                        systemImage: model.category(for: composerCategoryID)?.systemImage ?? "tray"
-                    )
+                    HStack(spacing: 5) {
+                        Image(systemName: model.category(for: composerCategoryID)?.systemImage ?? "tray")
+                        Text(model.category(for: composerCategoryID)?.name ?? "Без раздела")
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 8, weight: .semibold))
+                    }
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 9)
+                    .frame(maxWidth: 102, minHeight: 28)
+                    .background(TodayPalette.hover, in: Capsule())
+                    .contentShape(Capsule())
                 }
                 .menuStyle(.borderlessButton)
-                .fixedSize()
+                .menuIndicator(.hidden)
 
                 Button {
                     showsDeadlinePicker = true
                 } label: {
-                    if let dueDate {
-                        TaskDueDateLabel(dueDate: dueDate, isCompleted: false)
-                    } else {
-                        Label("Добавить срок", systemImage: "calendar.badge.plus")
-                            .foregroundStyle(.secondary)
+                    HStack(spacing: 5) {
+                        if let dueDate {
+                            TaskDueDateLabel(dueDate: dueDate, isCompleted: false)
+                        } else {
+                            Label("Срок", systemImage: "calendar.badge.plus")
+                        }
                     }
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .padding(.horizontal, 9)
+                    .frame(maxWidth: 112, minHeight: 28)
+                    .background(TodayPalette.hover, in: Capsule())
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 .popover(isPresented: $showsDeadlinePicker, arrowEdge: .bottom) {
@@ -229,12 +245,16 @@ struct TodayView: View {
 
                 Spacer()
 
-                Text("⌘↵ добавить")
+                Text("↵ добавить  ·  ⇧↵ строка")
+                    .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                    .layoutPriority(1)
             }
-            .font(.system(size: 12))
-            .padding(.horizontal, 13)
-            .frame(height: 38)
+            .font(.system(size: 11.5))
+            .padding(.horizontal, 12)
+            .frame(height: 42)
         }
         .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
