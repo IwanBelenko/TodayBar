@@ -50,6 +50,32 @@ internal static class Ui
               <Style TargetType="ContextMenu"><Setter Property="Background" Value="{DynamicResource Raised}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="FontSize" Value="15"/></Style>
               <Style TargetType="MenuItem"><Setter Property="Foreground" Value="{DynamicResource Ink}"/><Setter Property="Padding" Value="10,6"/></Style>
               <Style TargetType="ToolTip"><Setter Property="Background" Value="{DynamicResource Raised}"/><Setter Property="Foreground" Value="{DynamicResource Ink}"/></Style>
+              <Style x:Key="ScrollPage" TargetType="RepeatButton">
+                <Setter Property="Focusable" Value="False"/>
+                <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></Setter.Value></Setter>
+              </Style>
+              <Style TargetType="ScrollBar">
+                <Setter Property="Width" Value="10"/><Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+                  <Grid Background="{TemplateBinding Background}">
+                    <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True">
+                      <Track.DecreaseRepeatButton><RepeatButton x:Name="Before" Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource ScrollPage}"/></Track.DecreaseRepeatButton>
+                      <Track.Thumb><Thumb>
+                        <Thumb.Template><ControlTemplate TargetType="Thumb"><Border Background="{DynamicResource Line}" CornerRadius="4" Margin="2"/></ControlTemplate></Thumb.Template>
+                      </Thumb></Track.Thumb>
+                      <Track.IncreaseRepeatButton><RepeatButton x:Name="After" Command="{x:Static ScrollBar.PageDownCommand}" Style="{StaticResource ScrollPage}"/></Track.IncreaseRepeatButton>
+                    </Track>
+                  </Grid>
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                      <Setter Property="Width" Value="Auto"/><Setter Property="Height" Value="10"/>
+                      <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                      <Setter TargetName="Before" Property="Command" Value="{x:Static ScrollBar.PageLeftCommand}"/>
+                      <Setter TargetName="After" Property="Command" Value="{x:Static ScrollBar.PageRightCommand}"/>
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate></Setter.Value></Setter>
+              </Style>
             </ResourceDictionary>
             """);
         resources["Surface"] = Brush(isDark ? "#212121" : "#F7F7F8");

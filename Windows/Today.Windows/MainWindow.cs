@@ -74,7 +74,10 @@ internal sealed class MainWindow : Window
         searchGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(26) });
         Search.ToolTip = "Поиск задач · Ctrl+F"; Ui.Name(Search, "Поиск задач");
         searchGrid.Children.Add(Search);
+        var searchHint = Ui.Text("⌕ Поиск задач", 13, "Muted"); searchHint.IsHitTestVisible = false;
+        searchGrid.Children.Add(searchHint);
         var clearSearch = Ui.Button("×", "Очистить поиск", () => Search.Clear());
+        clearSearch.Visibility = Visibility.Collapsed;
         clearSearch.Padding = new Thickness(0); Grid.SetColumn(clearSearch, 1); searchGrid.Children.Add(clearSearch);
         var searchCard = Ui.Card(searchGrid, 10); searchCard.Height = 34; searchCard.Padding = new Thickness(7, 0, 0, 0);
         Grid.SetColumn(searchCard, 2); header.Children.Add(searchCard);
@@ -103,6 +106,8 @@ internal sealed class MainWindow : Window
         composerGrid.ColumnDefinitions.Add(new ColumnDefinition()); composerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         Composer.ToolTip = "Новое дело. Enter — добавить, Shift+Enter — новая строка"; Ui.Name(Composer, "Новое дело");
         composerGrid.Children.Add(Composer);
+        var composerHint = Ui.Text("＋ Новое дело…", 17, "Muted"); composerHint.VerticalAlignment = VerticalAlignment.Top;
+        composerHint.Margin = new Thickness(2, 2, 0, 0); composerHint.IsHitTestVisible = false; composerGrid.Children.Add(composerHint);
         addButton = Ui.Button("↑", "Добавить задачу", AddTask); addButton.FontSize = 22; addButton.Padding = new Thickness(0);
         addButton.Height = 34; addButton.VerticalAlignment = VerticalAlignment.Top;
         addButton.SetResourceReference(BackgroundProperty, "Hover");
@@ -121,9 +126,16 @@ internal sealed class MainWindow : Window
         error.TextWrapping = TextWrapping.Wrap; error.Margin = new Thickness(0, 8, 0, 0); error.Visibility = Visibility.Collapsed;
         bottom.Children.Add(error); footer.Margin = new Thickness(4, 9, 0, 0); bottom.Children.Add(footer); Put(root, bottom, 6);
 
-        Search.TextChanged += (_, _) => RenderRows();
+        Search.TextChanged += (_, _) => {
+            searchHint.Visibility = Search.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+            clearSearch.Visibility = Search.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+            RenderRows();
+        };
         Search.PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { Search.Clear(); e.Handled = true; } };
-        Composer.TextChanged += (_, _) => addButton.IsEnabled = !string.IsNullOrWhiteSpace(Composer.Text);
+        Composer.TextChanged += (_, _) => {
+            addButton.IsEnabled = !string.IsNullOrWhiteSpace(Composer.Text);
+            composerHint.Visibility = Composer.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        };
         Composer.PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) { AddTask(); e.Handled = true; }
