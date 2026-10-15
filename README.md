@@ -49,14 +49,14 @@ Today 1.6.0 на Mac и Windows. На скриншотах — примеры з
 
 | Mac · светлая тема | Windows · светлая тема |
 | :---: | :---: |
-| <img src="docs/screenshots/macos-light.png" width="360" alt="Today на Mac в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> | <img src="docs/screenshots/windows-light.png" width="360" alt="Today на Windows в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> |
+| <img src="docs/screenshots/v1.6.0/macos-light.png" width="360" alt="Today на Mac в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> | <img src="docs/screenshots/v1.6.0/windows-light.png" width="360" alt="Today на Windows в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> |
 
 <details>
 <summary>Посмотреть тёмную тему</summary>
 
 | Mac · тёмная тема | Windows · тёмная тема |
 | :---: | :---: |
-| <img src="docs/screenshots/macos-dark.png" width="360" alt="Today на Mac в тёмной теме"> | <img src="docs/screenshots/windows-dark.png" width="360" alt="Today на Windows в тёмной теме"> |
+| <img src="docs/screenshots/v1.6.0/macos-dark.png" width="360" alt="Today на Mac в тёмной теме"> | <img src="docs/screenshots/v1.6.0/windows-dark.png" width="360" alt="Today на Windows в тёмной теме"> |
 
 </details>
 
@@ -247,7 +247,7 @@ TODAYBAR_SNAPSHOT_DIR="$PWD/.build/ui-previews" ./scripts/test.sh
 В набор входят светлая и тёмная темы, найденная задача, пустая выдача и поиск по истории.
 Снимки `today-light.png` и `today-dark.png` используют настоящее окно `TodayPanel`
 с тем же оформлением, что и приложение; тест проверяет прозрачность скруглённых углов.
-Для README эти снимки сохраняются в `docs/screenshots/macos-light.png` и `macos-dark.png`.
+Для README снимки сохраняются в `docs/screenshots/v1.6.0/` с именами `macos-light.png` и `macos-dark.png`.
 Windows-снимки берутся из артефакта `Today-Windows-previews` успешной сборки GitHub Actions.
 При необходимости можно указать установленный SDK через переменную `SDKROOT`.
 
