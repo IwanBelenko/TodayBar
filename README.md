@@ -43,6 +43,23 @@
 
 </details>
 
+## Как выглядит Today
+
+Today 1.6.0 на Mac и Windows. На скриншотах — примеры задач, а не личные данные.
+
+| Mac · светлая тема | Windows · светлая тема |
+| :---: | :---: |
+| <img src="docs/screenshots/macos-light.png" width="360" alt="Today на Mac в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> | <img src="docs/screenshots/windows-light.png" width="360" alt="Today на Windows в светлой теме: поиск, разделы, список задач с приоритетами и добавление нового дела"> |
+
+<details>
+<summary>Посмотреть тёмную тему</summary>
+
+| Mac · тёмная тема | Windows · тёмная тема |
+| :---: | :---: |
+| <img src="docs/screenshots/macos-dark.png" width="360" alt="Today на Mac в тёмной теме"> | <img src="docs/screenshots/windows-dark.png" width="360" alt="Today на Windows в тёмной теме"> |
+
+</details>
+
 ## Как установить
 
 ### На Mac
