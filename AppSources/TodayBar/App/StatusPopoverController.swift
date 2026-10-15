@@ -2,9 +2,30 @@ import AppKit
 import ServiceManagement
 import SwiftUI
 
-private final class TodayPanel: NSPanel {
+final class TodayPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+
+    func configure(model: TaskListViewModel, hoverChanged: @escaping (Bool) -> Void) {
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = true
+        level = .popUpMenu
+        collectionBehavior = [.transient, .moveToActiveSpace, .fullScreenAuxiliary]
+        animationBehavior = .utilityWindow
+        hidesOnDeactivate = false
+
+        let hostingController = NSHostingController(
+            rootView: RootView(model: model, hoverChanged: hoverChanged)
+        )
+        contentViewController = hostingController
+
+        let contentView = hostingController.view
+        contentView.wantsLayer = true
+        contentView.layer?.cornerRadius = 34
+        contentView.layer?.cornerCurve = .continuous
+        contentView.layer?.masksToBounds = true
+    }
 }
 
 @MainActor
@@ -30,7 +51,9 @@ final class StatusPopoverController: NSObject {
         super.init()
 
         configureStatusItem()
-        configurePanel(model: model)
+        panel.configure(model: model) { [weak self] isInside in
+            self?.panelHoverChanged(isInside)
+        }
     }
 
     deinit {
@@ -55,29 +78,6 @@ final class StatusPopoverController: NSObject {
         )
         button.addTrackingArea(tracking)
         trackingArea = tracking
-    }
-
-    private func configurePanel(model: TaskListViewModel) {
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = true
-        panel.level = .popUpMenu
-        panel.collectionBehavior = [.transient, .moveToActiveSpace, .fullScreenAuxiliary]
-        panel.animationBehavior = .utilityWindow
-        panel.hidesOnDeactivate = false
-
-        let hostingController = NSHostingController(
-            rootView: RootView(model: model) { [weak self] isInside in
-                self?.panelHoverChanged(isInside)
-            }
-        )
-        panel.contentViewController = hostingController
-
-        let contentView = hostingController.view
-        contentView.wantsLayer = true
-        contentView.layer?.cornerRadius = 34
-        contentView.layer?.cornerCurve = .continuous
-        contentView.layer?.masksToBounds = true
     }
 
     @objc private func statusItemPressed() {

@@ -57,10 +57,12 @@ struct InterfaceTests {
         ])
         let model = TaskListViewModel(repository: repository, categoryRepository: MemoryCategoryRepository(),
                                       reminderScheduler: TestReminderScheduler())
-        for (name, appearance, scheme) in [("light", NSAppearance.Name.aqua, ColorScheme.light),
-                                            ("dark", .darkAqua, .dark)] {
-            try await snapshot(RootView(model: model, hoverChanged: { _ in }).environment(\.colorScheme, scheme),
-                         appearance: appearance, to: directory.appendingPathComponent("today-\(name).png"))
+        for (name, appearance) in [("light", NSAppearance.Name.aqua), ("dark", .darkAqua)] {
+            let panel = TodayPanel(contentRect: NSRect(x: 0, y: 0, width: 420, height: 590),
+                                   styleMask: [.borderless], backing: .buffered, defer: false)
+            panel.configure(model: model, hoverChanged: { _ in })
+            try await snapshot(panel, appearance: appearance,
+                               to: directory.appendingPathComponent("today-\(name).png"))
         }
         try await snapshot(TodayView(model: model, searchQuery: .constant("командой"), selectedCategoryID: .constant(nil))
             .frame(width: 420, height: 440).background(TodayPalette.surface),
@@ -83,12 +85,19 @@ struct InterfaceTests {
                                          height: CGFloat = 590) async throws {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: height),
                               styleMask: [.borderless], backing: .buffered, defer: false)
-        window.isReleasedWhenClosed = false
-        defer { window.close() }
-        window.appearance = NSAppearance(named: appearance)
         let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: "ru_RU")))
         host.frame = NSRect(x: 0, y: 0, width: 420, height: height)
         window.contentView = host
+        try await snapshot(window, appearance: appearance, to: url)
+    }
+
+    @MainActor
+    private func snapshot(_ window: NSWindow, appearance: NSAppearance.Name, to url: URL) async throws {
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.appearance = NSAppearance(named: appearance)
+        let host = try #require(window.contentView)
+        host.wantsLayer = true
         window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
         window.orderFront(nil)
         // Native text editors measure after their first layout, then update SwiftUI state.
@@ -105,8 +114,31 @@ struct InterfaceTests {
                         "Multiline task text must remain fully visible")
             }
         }
-        let bitmap = try #require(host.bitmapImageRepForCachingDisplay(in: host.bounds))
-        host.cacheDisplay(in: host.bounds, to: bitmap)
+        // Capture the real panel's layer tree, including its rounded mask.
+        // cacheDisplay alone only captures rectangular SwiftUI content, not the window's shape.
+        let scale = window.backingScaleFactor
+        let bitmap = try #require(NSBitmapImageRep(
+            bitmapDataPlanes: nil, pixelsWide: Int(host.bounds.width * scale),
+            pixelsHigh: Int(host.bounds.height * scale), bitsPerSample: 8, samplesPerPixel: 4,
+            hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
+        ))
+        let context = try #require(NSGraphicsContext(bitmapImageRep: bitmap)?.cgContext)
+        context.scaleBy(x: scale, y: scale)
+        if host.isFlipped {
+            context.translateBy(x: 0, y: host.bounds.height)
+            context.scaleBy(x: 1, y: -1)
+        }
+        let layer = try #require(host.layer)
+        layer.render(in: context)
+        if window is TodayPanel {
+            for x in [0, bitmap.pixelsWide - 1] {
+                for y in [0, bitmap.pixelsHigh - 1] {
+                    #expect(bitmap.colorAt(x: x, y: y)?.alphaComponent == 0,
+                            "Full-window screenshots must preserve transparent rounded corners")
+                }
+            }
+            #expect(bitmap.colorAt(x: bitmap.pixelsWide / 2, y: bitmap.pixelsHigh / 2)?.alphaComponent == 1)
+        }
         let data = try #require(bitmap.representation(using: .png, properties: [:]))
         try data.write(to: url)
     }
