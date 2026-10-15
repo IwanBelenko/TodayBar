@@ -18,13 +18,16 @@ TODAY_DEVELOPER_PATH="$(xcode-select -p)"
 TODAY_FRAMEWORKS="$TODAY_DEVELOPER_PATH/Library/Developer/Frameworks"
 TODAY_SWIFT_BIN="$(dirname "$(xcrun --find swiftc)")"
 test_flags=()
+if [[ "$(swift test --help)" == *"--disable-xctest"* ]]; then
+    test_flags+=(--disable-xctest)
+fi
 if [[ -d "$TODAY_FRAMEWORKS/Testing.framework" ]]; then
     test_flags+=(-Xswiftc -F -Xswiftc "$TODAY_FRAMEWORKS")
     test_flags+=(-Xswiftc -plugin-path -Xswiftc "$TODAY_SWIFT_BIN/../lib/swift/host/plugins/testing")
     test_flags+=(-Xlinker -rpath -Xlinker "$TODAY_FRAMEWORKS")
 fi
 
-swift test --build-system native --disable-sandbox --disable-xctest \
+swift test --build-system native --disable-sandbox \
     --cache-path "$PROJECT_DIR/.build/cache" \
     --config-path "$PROJECT_DIR/.build/config" \
     --security-path "$PROJECT_DIR/.build/security" \
