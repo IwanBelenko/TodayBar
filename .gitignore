@@ -3,4 +3,5 @@
 dist/
 .DS_Store
 /sources/
-/AGENTS.md
+**/bin/
+**/obj/

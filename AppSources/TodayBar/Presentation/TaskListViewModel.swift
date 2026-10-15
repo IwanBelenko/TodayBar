@@ -30,7 +30,12 @@ final class TaskListViewModel: ObservableObject {
     var todayPending: [TodoItem] {
         tasks
             .filter { !$0.isCompleted }
-            .sorted { $0.createdAt < $1.createdAt }
+            .sorted {
+                if $0.priority != $1.priority {
+                    return $0.priority.flameCount > $1.priority.flameCount
+                }
+                return $0.createdAt < $1.createdAt
+            }
     }
 
     var todayCompleted: [TodoItem] {
@@ -40,13 +45,26 @@ final class TaskListViewModel: ObservableObject {
                 guard let completedAt = task.completedAt else { return false }
                 return calendar.isDate(completedAt, inSameDayAs: today)
             }
-            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+            .sorted(by: completedTaskPrecedes)
     }
 
     var completedHistory: [TodoItem] {
         tasks
             .filter(\.isCompleted)
-            .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+            .sorted {
+                let firstDay = calendar.startOfDay(for: $0.completedAt ?? $0.updatedAt)
+                let secondDay = calendar.startOfDay(for: $1.completedAt ?? $1.updatedAt)
+                // История сохраняет порядок дней, приоритет действует внутри дня.
+                if firstDay != secondDay { return firstDay > secondDay }
+                return completedTaskPrecedes($0, $1)
+            }
+    }
+
+    private func completedTaskPrecedes(_ first: TodoItem, _ second: TodoItem) -> Bool {
+        if first.priority != second.priority {
+            return first.priority.flameCount > second.priority.flameCount
+        }
+        return (first.completedAt ?? .distantPast) > (second.completedAt ?? .distantPast)
     }
 
     var overdueCount: Int {
@@ -142,14 +160,22 @@ final class TaskListViewModel: ObservableObject {
         dueDate == nil ? reminderScheduler.cancel(for: id) : reminderScheduler.schedule(for: task)
     }
 
+    func updatePriority(id: UUID, priority: TaskPriority) {
+        guard let index = tasks.firstIndex(where: { $0.id == id }),
+              tasks[index].priority != priority else { return }
+        tasks[index].priority = priority
+        tasks[index].updatedAt = now()
+        persist()
+    }
+
     func delete(id: UUID) {
         tasks.removeAll { $0.id == id }
         reminderScheduler.cancel(for: id)
         persist()
     }
 
-    func clearHistory() {
-        tasks.removeAll { $0.isCompleted }
+    func clearHistory(categoryID: UUID? = nil) {
+        tasks.removeAll { $0.isCompleted && (categoryID == nil || $0.categoryID == categoryID) }
         persist()
     }
 

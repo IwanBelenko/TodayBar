@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [main, "agent/**"]
+    branches: [main, "agent/**", "codex/**"]
   pull_request:
   workflow_dispatch:
 
@@ -20,6 +20,9 @@ jobs:
       - name: Build universal app
         run: ./scripts/build-app.sh
 
+      - name: Test macOS app
+        run: ./scripts/test.sh
+
       - name: Package app
         run: ditto -c -k --sequesterRsrc --keepParent dist/Today.app Today-universal.zip
 
@@ -28,3 +31,44 @@ jobs:
         with:
           name: Today-universal
           path: Today-universal.zip
+
+  windows-app:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - name: Test domain and storage
+        run: dotnet run --project Windows/Today.Core.Tests -c Release
+      - name: Test native Windows interface
+        shell: pwsh
+        run: |
+          dotnet build Windows/Today.Windows -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $test = Start-Process Windows/Today.Windows/bin/Release/net10.0-windows/Today.exe -ArgumentList '--smoke-test', '.build/windows-previews' -Wait -PassThru -NoNewWindow
+          if ($test.ExitCode -ne 0) { exit $test.ExitCode }
+      - name: Upload Windows interface previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Today-Windows-previews
+          path: .build/windows-previews
+          if-no-files-found: warn
+      - name: Build Windows x64 and ARM64
+        shell: pwsh
+        run: |
+          ./scripts/build-windows.ps1 -Runtime win-x64
+          ./scripts/build-windows.ps1 -Runtime win-arm64
+      - name: Upload Windows x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Today-windows-x64
+          path: dist/Today-win-x64/Today.exe
+      - name: Upload Windows ARM64
+        uses: actions/upload-artifact@v4
+        with:
+          name: Today-windows-arm64
+          path: dist/Today-win-arm64/Today.exe

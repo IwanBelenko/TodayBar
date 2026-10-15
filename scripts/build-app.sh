@@ -7,7 +7,9 @@ CONTENTS_DIR="$APP_DIR/Contents"
 
 cd "$PROJECT_DIR"
 if [[ -z "${SDKROOT:-}" ]]; then
-    if [[ -d "/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk" ]]; then
+    if [[ -d "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk" ]]; then
+        export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk"
+    elif [[ -d "/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk" ]]; then
         export SDKROOT="/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk"
     else
         export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
@@ -15,8 +17,9 @@ if [[ -z "${SDKROOT:-}" ]]; then
 fi
 export CLANG_MODULE_CACHE_PATH="$PROJECT_DIR/.build/ModuleCache"
 export SWIFTPM_MODULECACHE_OVERRIDE="$PROJECT_DIR/.build/ModuleCache"
-swift build -c release --triple arm64-apple-macosx13.0 --disable-sandbox
-swift build -c release --triple x86_64-apple-macosx13.0 --disable-sandbox
+# Keep the architecture-specific output paths stable across SwiftPM versions.
+swift build -c release --triple arm64-apple-macosx13.0 --build-system native --disable-sandbox --cache-path "$PROJECT_DIR/.build/cache"
+swift build -c release --triple x86_64-apple-macosx13.0 --build-system native --disable-sandbox --cache-path "$PROJECT_DIR/.build/cache"
 
 mkdir -p "$CONTENTS_DIR/MacOS" "$CONTENTS_DIR/Resources"
 lipo -create \

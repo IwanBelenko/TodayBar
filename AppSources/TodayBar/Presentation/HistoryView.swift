@@ -2,11 +2,19 @@ import SwiftUI
 
 struct HistoryView: View {
     @ObservedObject var model: TaskListViewModel
+    @Binding var searchQuery: String
+    let selectedCategoryID: UUID?
     @State private var confirmClear = false
+
+    private var taskFilter: TaskFilter { TaskFilter(query: searchQuery, categoryID: selectedCategoryID) }
+
+    private var matchingTasks: [TodoItem] {
+        model.completedHistory.filter(taskFilter.matches)
+    }
 
     private var groups: [(Date, [TodoItem])] {
         let calendar = Calendar.autoupdatingCurrent
-        let grouped = Dictionary(grouping: model.completedHistory) { task in
+        let grouped = Dictionary(grouping: matchingTasks) { task in
             calendar.startOfDay(for: task.completedAt ?? task.updatedAt)
         }
         return grouped.sorted { $0.key > $1.key }
@@ -15,7 +23,12 @@ struct HistoryView: View {
     var body: some View {
         VStack(spacing: 0) {
             if groups.isEmpty {
-                emptyState
+                if taskFilter.isSearching {
+                    SearchEmptyView(query: $searchQuery)
+                        .frame(maxHeight: .infinity)
+                } else {
+                    emptyState
+                }
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 18) {
@@ -32,9 +45,11 @@ struct HistoryView: View {
         }
         .alert("Очистить историю?", isPresented: $confirmClear) {
             Button("Отмена", role: .cancel) {}
-            Button("Очистить", role: .destructive) { model.clearHistory() }
+            Button("Очистить", role: .destructive) { model.clearHistory(categoryID: selectedCategoryID) }
         } message: {
-            Text("Все выполненные дела будут удалены без возможности восстановления.")
+            Text(selectedCategoryID == nil
+                 ? "Все выполненные дела будут удалены без возможности восстановления."
+                 : "Выполненные дела из раздела «\(model.category(for: selectedCategoryID)?.name ?? "")» будут удалены. История остальных разделов сохранится.")
         }
     }
 
@@ -81,11 +96,13 @@ struct HistoryView: View {
 
     private var historyFooter: some View {
         HStack {
-            Text("Всего выполнено: \(model.completedHistory.count)")
+            Text(taskFilter.isSearching ? "Найдено: \(matchingTasks.count)" : "Всего выполнено: \(matchingTasks.count)")
                 .monospacedDigit()
             Spacer()
-            Button("Очистить") { confirmClear = true }
-                .buttonStyle(.plain)
+            if !taskFilter.isSearching {
+                Button("Очистить") { confirmClear = true }
+                    .buttonStyle(.plain)
+            }
         }
         .font(.system(size: 13))
         .foregroundStyle(.secondary)
@@ -131,10 +148,13 @@ private struct HistoryRow: View {
                         }
                     }
 
-                if let category = model.category(for: task.categoryID) {
-                    Label(category.name, systemImage: category.systemImage)
-                        .font(.system(size: 11.5))
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    TaskPriorityIndicator(priority: task.priority)
+                    if let category = model.category(for: task.categoryID) {
+                        Label(category.name, systemImage: category.systemImage)
+                            .font(.system(size: 11.5))
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -145,6 +165,8 @@ private struct HistoryRow: View {
                     .foregroundStyle(.secondary)
                     .monospacedDigit()
             }
+
+            TaskActionsMenu(task: task, model: model)
         }
         .padding(.vertical, 9)
     }

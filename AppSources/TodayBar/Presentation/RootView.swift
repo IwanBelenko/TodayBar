@@ -11,18 +11,22 @@ struct RootView: View {
     @ObservedObject var model: TaskListViewModel
     let hoverChanged: (Bool) -> Void
     @State private var section: Section = .today
+    @State private var searchQuery = ""
+    @State private var selectedCategoryID: UUID?
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
             header
             tabs
+            CategoryBar(model: model, selectedCategoryID: $selectedCategoryID)
 
             Group {
                 switch section {
                 case .today:
-                    TodayView(model: model)
+                    TodayView(model: model, searchQuery: $searchQuery, selectedCategoryID: $selectedCategoryID)
                 case .history:
-                    HistoryView(model: model)
+                    HistoryView(model: model, searchQuery: $searchQuery, selectedCategoryID: selectedCategoryID)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,7 +49,7 @@ struct RootView: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Image(systemName: "checkmark")
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 34, height: 34)
@@ -58,14 +62,23 @@ struct RootView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Сегодня")
                     .font(.system(size: 21, weight: .semibold))
-                Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                ViewThatFits(in: .horizontal) {
+                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                        .fixedSize()
+                    Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day().month(.wide)))
+                        .fixedSize()
+                }
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            Spacer()
+            searchField
 
             Menu {
+                Button("Найти задачу") { isSearchFocused = true }
+                    .keyboardShortcut("f", modifiers: .command)
+                Divider()
                 Button("Завершить Today") {
                     NSApplication.shared.terminate(nil)
                 }
@@ -73,7 +86,7 @@ struct RootView: View {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(width: 30, height: 30)
+                    .frame(width: 24, height: 30)
                     .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
@@ -84,6 +97,42 @@ struct RootView: View {
         .padding(.horizontal, 19)
         .padding(.top, 18)
         .padding(.bottom, 13)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+            TextField("Поиск задач", text: $searchQuery)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused($isSearchFocused)
+                .accessibilityLabel("Поиск задач в выбранной вкладке")
+                .onExitCommand {
+                    if searchQuery.isEmpty { isSearchFocused = false }
+                    else { searchQuery = "" }
+                }
+            if !searchQuery.isEmpty {
+                Button {
+                    searchQuery = ""
+                    isSearchFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Очистить поиск")
+            }
+        }
+        .padding(.horizontal, 9)
+        .frame(width: 138, height: 32)
+        .background(TodayPalette.raised, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(isSearchFocused ? Color.primary.opacity(0.4) : TodayPalette.border, lineWidth: 0.7)
+        }
+        .help("Поиск по тексту задач · ⌘F")
     }
 
     private var tabs: some View {
@@ -98,7 +147,7 @@ struct RootView: View {
                         HStack(spacing: 4) {
                             Text(item.rawValue)
                             if item == .today {
-                                Text("\(model.todayPending.count)")
+                                Text("\(pendingCount)")
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -141,7 +190,7 @@ struct RootView: View {
             }
             .frame(width: 42, height: 3)
 
-            Text("\(model.todayCompleted.count) из \(todayTotal)")
+            Text("\(completedCount) из \(todayTotal)")
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -150,18 +199,25 @@ struct RootView: View {
     }
 
     private var todayTotal: Int {
-        model.todayPending.count + model.todayCompleted.count
+        pendingCount + completedCount
+    }
+
+    private var categoryFilter: TaskFilter { TaskFilter(query: "", categoryID: selectedCategoryID) }
+    private var pendingCount: Int { model.todayPending.filter(categoryFilter.matches).count }
+    private var completedCount: Int { model.todayCompleted.filter(categoryFilter.matches).count }
+    private var overdueCount: Int {
+        model.todayPending.filter { categoryFilter.matches($0) && ($0.dueDate ?? .distantFuture) < Date() }.count
     }
 
     private var progressValue: CGFloat {
         guard todayTotal > 0 else { return 0 }
-        return CGFloat(model.todayCompleted.count) / CGFloat(todayTotal)
+        return CGFloat(completedCount) / CGFloat(todayTotal)
     }
 
     private var footer: some View {
         HStack {
-            if model.overdueCount > 0 {
-                Label("Просрочено: \(model.overdueCount)", systemImage: "exclamationmark.circle.fill")
+            if overdueCount > 0 {
+                Label("Просрочено: \(overdueCount)", systemImage: "exclamationmark.circle.fill")
                     .foregroundStyle(.red)
             } else {
                 Label("На этом Mac", systemImage: "lock")
@@ -170,7 +226,7 @@ struct RootView: View {
             Text("Today")
         }
         .font(.system(size: 13))
-        .foregroundStyle(model.overdueCount > 0 ? Color.primary : Color.secondary)
+        .foregroundStyle(overdueCount > 0 ? Color.primary : Color.secondary)
         .padding(.horizontal, 17)
         .frame(height: 34)
         .overlay(alignment: .top) {

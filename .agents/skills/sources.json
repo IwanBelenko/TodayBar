@@ -1,0 +1,95 @@
+{
+  "installed_on": "2026-10-15",
+  "source_worktree": "/Users/ivan/.codex/worktrees/analytics-kpi-goals/LMS_Smartis",
+  "source_head": "7d98a6cf9c0d1d13f951e12932cf7a89247c6d1a",
+  "source_is_clean": false,
+  "note": "Перенесены фактические локальные файлы, включая незакоммиченные настройки HCM/LMS. Upstream-ревизии взяты из реестра источника и повторно в сети не проверялись. Навыки скопированы побайтно с лицензиями, без hooks, установочных скриптов и runtime-зависимостей. Роли адаптированы отдельно под Today.",
+  "skills": [
+    {
+      "name": "ponytail",
+      "repository": "https://github.com/dietrichgebert/ponytail",
+      "revision": "c982cd411abb53323c4baa1baa3c2f020b8d0b08",
+      "version": "4.10.3",
+      "upstream_reverified": false,
+      "sha256": {
+        "LICENSE": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+        "SKILL.md": "9ab60e3e1227f599cb26c9812b90a1a97a8d4720633a355a876f925b900d541a",
+        "UPSTREAM.md": "2b69af0da48c8318723daca9b3a71641ff31c91c03050f245aa500ff1243c473"
+      },
+      "source_sha256": {
+        "LICENSE": "fb1bc6909ac3ef82d5c22106e32ef682b0cff66788fa915fb9b53b15c9d2f3ab",
+        "SKILL.md": "1316a2f3f95741d2300b116fe0c2d81ce4a9568656ed0a62643f54aaf09957f2",
+        "UPSTREAM.md": "2b69af0da48c8318723daca9b3a71641ff31c91c03050f245aa500ff1243c473"
+      },
+      "local_adaptations": [
+        "argument-hint перенесён в metadata; текст инструкций и уровни сохранены."
+      ],
+      "copied_from": "/Users/ivan/.codex/worktrees/analytics-kpi-goals/LMS_Smartis/.agents/skills/ponytail"
+    },
+    {
+      "name": "frontend-design",
+      "repository": "https://github.com/anthropics/skills",
+      "revision": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "source_path": "skills/frontend-design",
+      "sha256": {
+        "LICENSE.txt": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+        "SKILL.md": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+      },
+      "copied_from": "/Users/ivan/.codex/worktrees/analytics-kpi-goals/LMS_Smartis/.agents/skills/frontend-design",
+      "upstream_reverified": false
+    },
+    {
+      "name": "grill-me",
+      "repository": "https://github.com/mattpocock/skills",
+      "revision": "49dd158d1076134a641b33efb035946536778336",
+      "source_path": "skills/productivity/grill-me",
+      "sha256": {
+        "SKILL.md": "e0a2070992b1ed7f4d4d8504e0fae0cf9c96c8bab4dd50c37989b0f4c7ff1010",
+        "agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b"
+      },
+      "copied_from": "/Users/ivan/.codex/worktrees/analytics-kpi-goals/LMS_Smartis/.agents/skills/grill-me",
+      "upstream_reverified": false,
+      "source_sha256": {
+        "SKILL.md": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637",
+        "agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b"
+      },
+      "local_adaptations": [
+        "Удалено неподдерживаемое поле disable-model-invocation; явный вызов сохранён через agents/openai.yaml policy.allow_implicit_invocation=false."
+      ]
+    },
+    {
+      "name": "grilling",
+      "repository": "https://github.com/mattpocock/skills",
+      "revision": "49dd158d1076134a641b33efb035946536778336",
+      "source_path": "skills/productivity/grilling",
+      "sha256": {
+        "SKILL.md": "befdff1e27a1dfe2a294d5871169ac1afe16d983911daa4f32627514a48c1e15",
+        "agents/openai.yaml": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b"
+      },
+      "copied_from": "/Users/ivan/.codex/worktrees/analytics-kpi-goals/LMS_Smartis/.agents/skills/grilling",
+      "upstream_reverified": false
+    }
+  ],
+  "agent_adaptations": [
+    {
+      "name": "code_explorer",
+      "source": ".codex/agents/code_explorer.toml",
+      "changes": "Карта SwiftUI/AppKit и локального JSON вместо HCM. Модель не переопределяется."
+    },
+    {
+      "name": "developer",
+      "source": ".codex/agents/developer.toml",
+      "changes": "Swift/macOS и существующая архитектура Today вместо React/Django; наследование модели и разрешений."
+    },
+    {
+      "name": "ui_qa_reviewer",
+      "source": ".codex/agents/ui_qa_reviewer.toml",
+      "changes": "Нативный интерфейс macOS, клавиатура, фокус и темы. Удалены веб- и HR-специфичные требования."
+    },
+    {
+      "name": "data_safety_reviewer",
+      "source": ".codex/agents/access_reviewer.toml",
+      "changes": "Адаптация принципа независимой проверки безопасности: сохранность локальных задач и совместимость JSON вместо серверных прав и ФОТ."
+    }
+  ]
+}

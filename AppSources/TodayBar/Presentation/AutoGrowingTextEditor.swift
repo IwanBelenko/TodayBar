@@ -11,7 +11,7 @@ private final class PlaceholderTextView: NSTextView {
     var onCommandSubmit: (() -> Void)?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        if handlesSubmit(event) {
+        if window?.firstResponder === self, !hasMarkedText(), handlesSubmit(event) {
             onCommandSubmit?()
             return true
         }
@@ -19,7 +19,7 @@ private final class PlaceholderTextView: NSTextView {
     }
 
     override func keyDown(with event: NSEvent) {
-        if handlesSubmit(event) {
+        if !hasMarkedText(), handlesSubmit(event) {
             onCommandSubmit?()
             return
         }

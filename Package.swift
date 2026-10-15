@@ -14,6 +14,11 @@ let package = Package(
         .executableTarget(
             name: "TodayBar",
             path: "AppSources/TodayBar"
+        ),
+        .testTarget(
+            name: "TodayBarTests",
+            dependencies: ["TodayBar"],
+            path: "Tests/TodayBarTests"
         )
     ]
 )

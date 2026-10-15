@@ -6,8 +6,6 @@ struct TaskRow: View {
     @State private var title: String
     @State private var editorHeight: CGFloat = 22
     @State private var isHovered = false
-    @State private var isEditing = false
-    @State private var showsDeadlinePicker = false
 
     init(task: TodoItem, model: TaskListViewModel) {
         self.task = task
@@ -45,8 +43,8 @@ struct TaskRow: View {
                         offersCopyEntireText: true,
                         onCommandSubmit: finishEditing,
                         onFocusChange: { focused in
-                            isEditing = focused
-                            if !focused { finishEditing() }
+                            // Do not steal focus from search or another editor on blur.
+                            if !focused { model.finishEditing(id: task.id) }
                         }
                     )
                     .frame(maxWidth: .infinity)
@@ -60,37 +58,7 @@ struct TaskRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            if !task.isCompleted && task.dueDate == nil {
-                Button {
-                    showsDeadlinePicker = true
-                } label: {
-                    Image(systemName: "calendar.badge.plus")
-                        .font(.system(size: 10.5))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 20)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .opacity(isHovered || isEditing ? 1 : 0)
-                .help("Добавить срок")
-            }
-
-            taskMenu
-
-            Button {
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    model.delete(id: task.id)
-                }
-            } label: {
-                Image(systemName: "trash")
-                    .font(.system(size: 10.5))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 20, height: 20)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .opacity(isHovered || isEditing ? 1 : 0)
-            .accessibilityLabel("Удалить")
+            TaskActionsMenu(task: task, model: model)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 7)
@@ -104,74 +72,43 @@ struct TaskRow: View {
         .onChange(of: task.title) { value in
             if title != value { title = value }
         }
-        .popover(isPresented: $showsDeadlinePicker, arrowEdge: .trailing) {
-            DeadlinePickerView(dueDate: Binding(
-                get: { task.dueDate },
-                set: { model.updateDueDate(id: task.id, dueDate: $0) }
-            ))
-        }
     }
 
     @ViewBuilder
     private var metadata: some View {
-        if model.category(for: task.categoryID) != nil || task.dueDate != nil {
-            HStack(spacing: 8) {
-                if let category = model.category(for: task.categoryID) {
-                    Label(category.name, systemImage: category.systemImage)
-                        .foregroundStyle(.secondary)
+        if model.category(for: task.categoryID) != nil || task.dueDate != nil || task.priority != .none {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    categoryAndPriority
+                    deadline
                 }
-
-                if let dueDate = task.dueDate {
-                    Button {
-                        if !task.isCompleted { showsDeadlinePicker = true }
-                    } label: {
-                        TaskDueDateLabel(dueDate: dueDate, isCompleted: task.isCompleted)
-                    }
-                    .buttonStyle(.plain)
-                    .help(task.isCompleted ? "Срок задачи" : "Изменить дату и время")
+                .fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 4) {
+                    categoryAndPriority
+                    deadline
                 }
             }
             .font(.system(size: 11.5))
         }
     }
 
-    private var taskMenu: some View {
-        Menu {
-            Menu("Раздел") {
-                Button("Без раздела") { model.updateCategory(id: task.id, categoryID: nil) }
-                Divider()
-                ForEach(model.categories) { category in
-                    Button(category.name) { model.updateCategory(id: task.id, categoryID: category.id) }
-                }
+    private var categoryAndPriority: some View {
+        HStack(spacing: 8) {
+            TaskPriorityIndicator(priority: task.priority)
+            if let category = model.category(for: task.categoryID) {
+                Label(category.name, systemImage: category.systemImage)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
-
-            if !task.isCompleted {
-                Menu("Срок") {
-                    Button("Выбрать дату и время…") {
-                        DispatchQueue.main.async { showsDeadlinePicker = true }
-                    }
-                    Divider()
-                    Button("Сегодня, 18:00") { setDueDate(daysFromToday: 0, hour: 18) }
-                    Button("Завтра, 09:00") { setDueDate(daysFromToday: 1, hour: 9) }
-                    Button("Через неделю, 09:00") { setDueDate(daysFromToday: 7, hour: 9) }
-                    if task.dueDate != nil {
-                        Divider()
-                        Button("Убрать срок") { model.updateDueDate(id: task.id, dueDate: nil) }
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 10.5, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 20, height: 20)
-                .contentShape(Rectangle())
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
-        .fixedSize()
-        .opacity(isHovered || isEditing ? 1 : 0)
-        .help("Раздел и срок")
+    }
+
+    @ViewBuilder
+    private var deadline: some View {
+        if let dueDate = task.dueDate {
+            TaskDueDateLabel(dueDate: dueDate, isCompleted: task.isCompleted)
+                .help("Изменить срок можно в меню •••")
+        }
     }
 
     private var completionButton: some View {
@@ -204,10 +141,4 @@ struct TaskRow: View {
         NSApp.keyWindow?.makeFirstResponder(nil)
     }
 
-    private func setDueDate(daysFromToday: Int, hour: Int) {
-        let calendar = Calendar.autoupdatingCurrent
-        let day = calendar.date(byAdding: .day, value: daysFromToday, to: Date()) ?? Date()
-        let date = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day) ?? day
-        model.updateDueDate(id: task.id, dueDate: date)
-    }
 }
