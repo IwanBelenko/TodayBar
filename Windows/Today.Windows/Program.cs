@@ -55,14 +55,11 @@ internal sealed class TrayController : IDisposable
     private readonly MainWindow window;
     private readonly Forms.NotifyIcon tray;
     private readonly Icon icon;
-    private readonly DispatcherTimer hoverTimer = new() { Interval = TimeSpan.FromMilliseconds(250) };
     private readonly DispatcherTimer reminderTimer = new() { Interval = TimeSpan.FromSeconds(15) };
     private readonly HashSet<string> reminded = [];
     private readonly EventWaitHandle wake = new(false, EventResetMode.AutoReset, @"Local\TodayBar.Windows.Show");
     private readonly RegisteredWaitHandle wakeRegistration;
-    private DateTimeOffset lastTrayMove = DateTimeOffset.MinValue;
-    private DateTimeOffset suppressHoverUntil = DateTimeOffset.MinValue;
-    private bool pinned, disposed;
+    private bool disposed;
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
     public TrayController(Application app, TaskStore store)
@@ -70,17 +67,7 @@ internal sealed class TrayController : IDisposable
         this.app = app; this.store = store;
         window = new MainWindow(store, Quit); app.MainWindow = window;
         icon = CreateIcon(); tray = new Forms.NotifyIcon { Icon = icon, Text = "Today — список дел", Visible = true };
-        tray.MouseMove += (_, _) =>
-        {
-            lastTrayMove = DateTimeOffset.Now;
-            if (!window.IsVisible && DateTimeOffset.Now > suppressHoverUntil) Show(false);
-        };
-        tray.MouseClick += (_, e) =>
-        {
-            if (e.Button != Forms.MouseButtons.Left) return;
-            if (window.IsVisible && pinned) Hide(); else Show(true);
-        };
-        tray.BalloonTipClicked += (_, _) => Show(true);
+        BindActivation(tray, () => { if (window.IsVisible) Hide(); else Show(); }, Show);
         var menu = new Forms.ContextMenuStrip();
         var startup = new Forms.ToolStripMenuItem("Launch at Startup") { CheckOnClick = false };
         menu.Opening += (_, _) =>
@@ -100,13 +87,10 @@ internal sealed class TrayController : IDisposable
             catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
             { MessageBox.Show("Не удалось изменить автозапуск. " + error.Message, "Today"); }
         };
-        menu.Items.Add(new Forms.ToolStripMenuItem("Открыть Today", null, (_, _) => Show(true)));
+        menu.Items.Add(new Forms.ToolStripMenuItem("Открыть Today", null, (_, _) => Show()));
         menu.Items.Add(startup); menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add(new Forms.ToolStripMenuItem("Завершить Today", null, (_, _) => Quit()));
         tray.ContextMenuStrip = menu;
-        menu.Opening += (_, _) => { suppressHoverUntil = DateTimeOffset.Now.AddSeconds(2); };
-        menu.Closed += (_, _) => { suppressHoverUntil = DateTimeOffset.Now.AddSeconds(1); };
-        window.Interacted += () => pinned = true;
         window.Deactivated += (_, _) =>
         {
             window.Dispatcher.BeginInvoke(() =>
@@ -114,19 +98,21 @@ internal sealed class TrayController : IDisposable
                 if (!window.IsActive && !window.HasDialog && !window.HasOpenMenu) Hide();
             }, DispatcherPriority.Background);
         };
-        hoverTimer.Tick += (_, _) =>
-        {
-            if (!pinned && window.IsVisible && !window.IsMouseOver && !window.HasDialog && !window.HasOpenMenu &&
-                DateTimeOffset.Now - lastTrayMove > TimeSpan.FromSeconds(1.2)) Hide();
-        };
         reminderTimer.Tick += (_, _) => CheckReminders();
-        wakeRegistration = ThreadPool.RegisterWaitForSingleObject(wake, (_, _) => app.Dispatcher.BeginInvoke(() => Show(true)), null, Timeout.Infinite, false);
+        wakeRegistration = ThreadPool.RegisterWaitForSingleObject(wake, (_, _) => app.Dispatcher.BeginInvoke(() => Show()), null, Timeout.Infinite, false);
+    }
+
+    // Hover is deliberately not subscribed: only explicit clicks may open the window.
+    internal static void BindActivation(Forms.NotifyIcon tray, Action toggle, Action show)
+    {
+        tray.MouseClick += (_, e) => { if (e.Button == Forms.MouseButtons.Left) toggle(); };
+        tray.BalloonTipClicked += (_, _) => show();
     }
 
     public void Start(bool startup)
     {
-        hoverTimer.Start(); reminderTimer.Start();
-        if (!startup) Show(true);
+        reminderTimer.Start();
+        if (!startup) Show();
         CheckReminders();
     }
     private static bool IsStartupEnabled()
@@ -134,13 +120,12 @@ internal sealed class TrayController : IDisposable
         using var key = Registry.CurrentUser.OpenSubKey(RunKey);
         return key?.GetValue("TodayBar") is string command && command == $"\"{Environment.ProcessPath}\" --startup";
     }
-    private void Show(bool activate)
+    private void Show()
     {
-        pinned = activate;
-        if (!window.IsVisible) { Ui.ApplyTheme(window); window.Refresh(); window.ShowActivated = activate; window.Show(); PositionWindow(); }
-        if (activate) window.Activate();
+        if (!window.IsVisible) { Ui.ApplyTheme(window); window.Refresh(); window.ShowActivated = true; window.Show(); PositionWindow(); }
+        window.Activate();
     }
-    private void Hide() { window.Hide(); pinned = false; suppressHoverUntil = DateTimeOffset.Now.AddMilliseconds(600); }
+    private void Hide() => window.Hide();
     private void Quit() { if (window.ConfirmQuit()) app.Shutdown(); }
 
     private void PositionWindow()
@@ -157,7 +142,7 @@ internal sealed class TrayController : IDisposable
         var height = Math.Min((int)(window.Height * scale), area.Height - 16);
         var left = Math.Clamp(point.X - width + 20, area.Left + 8, area.Right - width - 8);
         var top = point.Y < area.Top + area.Height / 2 ? area.Top + 8 : area.Bottom - height - 8;
-        SetWindowPos(handle, IntPtr.Zero, left, top, width, height, 0x0014); // No activation / z-order change on hover.
+        SetWindowPos(handle, IntPtr.Zero, left, top, width, height, 0x0014); // Position only; Show handles activation.
     }
     private void CheckReminders()
     {
@@ -187,7 +172,7 @@ internal sealed class TrayController : IDisposable
     public void Dispose()
     {
         if (disposed) return; disposed = true;
-        hoverTimer.Stop(); reminderTimer.Stop(); wakeRegistration.Unregister(null); wake.Dispose();
+        reminderTimer.Stop(); wakeRegistration.Unregister(null); wake.Dispose();
         tray.Visible = false; tray.ContextMenuStrip?.Dispose(); tray.Dispose(); icon.Dispose();
     }
     [StructLayout(LayoutKind.Sequential)] private readonly struct NativePoint(int x, int y) { public readonly int X = x, Y = y; }

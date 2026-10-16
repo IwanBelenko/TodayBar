@@ -30,7 +30,6 @@ internal sealed class MainWindow : Window
     private bool history, completedExpanded = true, rendering;
     internal bool HasOpenMenu { get; private set; }
     internal bool HasDialog { get; private set; }
-    internal event Action? Interacted;
     internal IReadOnlyList<Guid> VisibleTaskIDs { get; private set; } = [];
     internal int PendingCount => store.Tasks.Count(t => !t.IsCompleted && TaskRules.Matches(t, "", selectedCategory));
     internal int CompletedCount => TaskRules.CompletedToday(store.Tasks, DateTimeOffset.Now, TimeZoneInfo.Local).Count(t => TaskRules.Matches(t, "", selectedCategory));
@@ -145,8 +144,6 @@ internal sealed class MainWindow : Window
             if (e.Key == Key.F && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) { Search.Focus(); Search.SelectAll(); e.Handled = true; }
             else if (e.Key == Key.Escape && !HasDialog && !HasOpenMenu) { Hide(); e.Handled = true; }
         };
-        PreviewMouseDown += (_, _) => Interacted?.Invoke();
-        PreviewKeyDown += (_, _) => Interacted?.Invoke();
         Closing += (_, e) => { e.Cancel = true; Hide(); };
         Refresh();
     }
@@ -347,7 +344,7 @@ internal sealed class MainWindow : Window
     }
     private void OpenMenu(ContextMenu menu, UIElement anchor)
     {
-        Interacted?.Invoke(); Ui.ApplyTheme(menu); TrackMenu(menu);
+        Ui.ApplyTheme(menu); TrackMenu(menu);
         menu.PlacementTarget = anchor; menu.Placement = PlacementMode.Bottom; menu.IsOpen = true;
     }
     private void UpdateComposer()

@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Today.Core;
+using Forms = System.Windows.Forms;
 
 namespace Today.Windows;
 
@@ -20,6 +22,7 @@ internal static class SmokeTests
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
         try
         {
+            CheckTrayActivation();
             var store = new TaskStore(data);
             var none = store.Add("Купить новую книгу", TaskCategory.PersonalID);
             var low = store.Add("Записаться на тренировку", TaskCategory.PersonalID);
@@ -60,11 +63,42 @@ internal static class SmokeTests
             var deadline = new DeadlineWindow(null) { Owner = window }; deadline.Show(); Pump();
             deadline.TimeField.Text = "14:35"; Check(deadline.TimeField.Text == "14:35", "editable time");
             Capture(deadline, output, "calendar-light", false); Capture(deadline, output, "calendar-dark", true); deadline.Close();
-            Console.WriteLine("PASS Windows UI: startup, themes, sorting, search, history, menu action, composer, clipboard, calendar");
+            Console.WriteLine("PASS Windows UI: click-only tray activation, startup, themes, sorting, search, history, menu action, composer, clipboard, calendar");
             app.Shutdown(); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); app.Shutdown(); return 1; }
         finally { Directory.Delete(data, recursive: true); }
+    }
+    private static void CheckTrayActivation()
+    {
+        // Exercise the real event bindings without installing an icon in the system tray.
+        using var tray = new Forms.NotifyIcon { Visible = false };
+        var visible = false;
+        var toggles = 0;
+        var shows = 0;
+        TrayController.BindActivation(tray, () => { visible = !visible; toggles++; }, () => { visible = true; shows++; });
+        void Raise(string name, params object[] args)
+        {
+            // NotifyIcon is sealed; its private On... methods raise the native component's events.
+            var method = typeof(Forms.NotifyIcon).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic)
+                ?? throw new InvalidOperationException("NotifyIcon event method missing: " + name);
+            method.Invoke(tray, args);
+        }
+        var move = new Forms.MouseEventArgs(Forms.MouseButtons.None, 0, 0, 0, 0);
+        var left = new Forms.MouseEventArgs(Forms.MouseButtons.Left, 1, 0, 0, 0);
+        for (var i = 0; i < 5; i++) Raise("OnMouseMove", move);
+        Check(!visible && toggles == 0 && shows == 0, "hover must not open Today");
+        Raise("OnMouseClick", new Forms.MouseEventArgs(Forms.MouseButtons.Right, 1, 0, 0, 0));
+        Check(!visible && toggles == 0, "right click must not open the task window");
+        Raise("OnMouseClick", left);
+        Check(visible && toggles == 1, "left click opens Today");
+        Raise("OnMouseMove", move);
+        Check(visible && toggles == 1 && shows == 0, "hover must not change an open window");
+        Raise("OnMouseClick", left);
+        Raise("OnMouseMove", move);
+        Check(!visible && toggles == 2 && shows == 0, "hover must not reopen a closed window");
+        Raise("OnBalloonTipClicked");
+        Check(visible && shows == 1, "notification click still opens Today");
     }
     private static void Capture(Window window, string output, string name, bool dark)
     {

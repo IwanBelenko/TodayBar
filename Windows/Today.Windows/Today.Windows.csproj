@@ -8,7 +8,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Today</AssemblyName>
-    <Version>1.6.0</Version>
+    <Version>1.6.1</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DebugType>embedded</DebugType>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
