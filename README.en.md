@@ -56,10 +56,11 @@ Windows 7/8, 32-bit Windows, or macOS earlier than 13.
 ## See Today in action
 
 A short Mac demo: add a task, set its priority, search, and check it off.
+About 8 seconds: follow the cursor; a small ring marks each click.
 The demo uses sample tasks, not personal data.
 
 <p align="center">
-  <img src="docs/demos/v1.6.1/today-en.gif" width="460" alt="Today demo: type a task, press Enter, assign three flames to move it to the top, find it with search, and mark it completed">
+  <img src="docs/demos/v1.6.1/today-en.gif" width="460" alt="Today demo with a cursor: type a task, click Add, see priority sorting, find the task with search, and mark it completed">
 </p>
 
 [View a still frame without animation](docs/demos/v1.6.1/today-en.png). Screenshots of both platforms are below.
@@ -263,7 +264,10 @@ snapshots come from the successful build's `Today-Windows-previews` artifact.
 
 README GIFs use captures of the production `TodayPanel` with in-memory sample tasks.
 They are scripted UI demonstrations, not desktop recordings; personal data is never loaded.
-The scenario also checks Enter submission, priority sorting, search, and completion.
+The cursor and short click rings are added during GIF assembly, with motion at 20 fps.
+The scenario checks Add, Clear search, and Complete clicks in the test window,
+plus sorting and search. Priority is changed programmatically: a caption shows
+the menu path, without recording the open menu. Enter has a separate test.
 To regenerate with standard macOS and Swift tools:
 
 ```bash
