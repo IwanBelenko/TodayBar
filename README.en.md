@@ -53,6 +53,17 @@ Windows 7/8, 32-bit Windows, or macOS earlier than 13.
 
 </details>
 
+## See Today in action
+
+A short Mac demo: add a task, set its priority, search, and check it off.
+The demo uses sample tasks, not personal data.
+
+<p align="center">
+  <img src="docs/demos/v1.6.1/today-en.gif" width="460" alt="Today demo: type a task, press Enter, assign three flames to move it to the top, find it with search, and mark it completed">
+</p>
+
+[View a still frame without animation](docs/demos/v1.6.1/today-en.png). Screenshots of both platforms are below.
+
 ## See the app
 
 Today on Mac and Windows. These screenshots use sample tasks, not personal data.
@@ -249,6 +260,18 @@ hardware are separate; screenshots and a successful build do not replace them.
 
 Keep README screenshots in versioned folders under `docs/screenshots/`. Windows
 snapshots come from the successful build's `Today-Windows-previews` artifact.
+
+README GIFs use captures of the production `TodayPanel` with in-memory sample tasks.
+They are scripted UI demonstrations, not desktop recordings; personal data is never loaded.
+The scenario also checks Enter submission, priority sorting, search, and completion.
+To regenerate with standard macOS and Swift tools:
+
+```bash
+TODAYBAR_TEST_LANGUAGE=ru TODAYBAR_DEMO_DIR="$PWD/.build/demo/ru" ./scripts/test.sh --filter recordReadmeDemo
+swift scripts/make-demo.swift .build/demo/ru docs/demos/v1.6.1/today-ru.gif
+TODAYBAR_TEST_LANGUAGE=en TODAYBAR_DEMO_DIR="$PWD/.build/demo/en" ./scripts/test.sh --filter recordReadmeDemo
+swift scripts/make-demo.swift .build/demo/en docs/demos/v1.6.1/today-en.gif
+```
 
 ### Architecture
 

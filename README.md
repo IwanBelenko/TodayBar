@@ -52,6 +52,17 @@
 
 </details>
 
+## Today в действии
+
+Короткая демонстрация на Mac: добавление задачи, приоритет, поиск и выполнение.
+В ролике — тестовые примеры, без личных данных.
+
+<p align="center">
+  <img src="docs/demos/v1.6.1/today-ru.gif" width="460" alt="Демонстрация Today: вводим задачу, сохраняем Enter, назначаем три огонька — задача поднимается наверх, находим её через поиск и отмечаем выполненной">
+</p>
+
+[Статичный кадр без анимации](docs/demos/v1.6.1/today-ru.png). Скриншоты обеих платформ — ниже.
+
 ## Как выглядит Today
 
 Today на Mac и Windows. На скриншотах — примеры задач, а не личные данные.
@@ -264,6 +275,18 @@ TODAYBAR_TEST_LANGUAGE=en TODAYBAR_SNAPSHOT_DIR="$PWD/.build/ui-previews/en" ./s
 Windows-снимки берутся из артефакта `Today-Windows-previews` успешной сборки GitHub Actions
 и сохраняются в папке своей версии (`docs/screenshots/v1.6.1/`, английские — в `en/`).
 При необходимости можно указать установленный SDK через переменную `SDKROOT`.
+
+GIF для README собирается из кадров настоящего `TodayPanel` с задачами в памяти.
+Это сценарная демонстрация состояний интерфейса, без записи рабочего стола и личных данных.
+Сценарий также проверяет добавление через Enter, сортировку, поиск и выполнение.
+Для пересоздания нужны только стандартные инструменты macOS и Swift:
+
+```bash
+TODAYBAR_TEST_LANGUAGE=ru TODAYBAR_DEMO_DIR="$PWD/.build/demo/ru" ./scripts/test.sh --filter recordReadmeDemo
+swift scripts/make-demo.swift .build/demo/ru docs/demos/v1.6.1/today-ru.gif
+TODAYBAR_TEST_LANGUAGE=en TODAYBAR_DEMO_DIR="$PWD/.build/demo/en" ./scripts/test.sh --filter recordReadmeDemo
+swift scripts/make-demo.swift .build/demo/en docs/demos/v1.6.1/today-en.gif
+```
 
 ### Архитектура
 
