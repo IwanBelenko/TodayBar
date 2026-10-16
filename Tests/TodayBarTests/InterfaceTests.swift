@@ -48,12 +48,12 @@ struct InterfaceTests {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let now = Date()
         let repository = MemoryTaskRepository(tasks: [
-            TodoItem(title: "Выбрать книгу на выходные", categoryID: TaskCategory.personalID),
-            TodoItem(title: "Записаться на тренировку", categoryID: TaskCategory.personalID, priority: .low),
-            TodoItem(title: "Обсудить с командой\nследующий этап проекта", categoryID: TaskCategory.workID, priority: .medium),
-            TodoItem(title: "Подготовить план на неделю", categoryID: TaskCategory.workID,
+            TodoItem(title: L10n.text("Выбрать книгу на выходные", "Choose a book for the weekend"), categoryID: TaskCategory.personalID),
+            TodoItem(title: L10n.text("Записаться на тренировку", "Book a workout"), categoryID: TaskCategory.personalID, priority: .low),
+            TodoItem(title: L10n.text("Обсудить с командой\nследующий этап проекта", "Discuss the next project phase\nwith the team"), categoryID: TaskCategory.workID, priority: .medium),
+            TodoItem(title: L10n.text("Подготовить план на неделю", "Plan the week"), categoryID: TaskCategory.workID,
                      dueDate: now.addingTimeInterval(86_400), priority: .high),
-            TodoItem(title: "Отправить отчёт", categoryID: TaskCategory.workID, completedAt: now, priority: .high)
+            TodoItem(title: L10n.text("Отправить отчёт", "Send the report"), categoryID: TaskCategory.workID, completedAt: now, priority: .high)
         ])
         let model = TaskListViewModel(repository: repository, categoryRepository: MemoryCategoryRepository(),
                                       reminderScheduler: TestReminderScheduler())
@@ -63,14 +63,16 @@ struct InterfaceTests {
             panel.configure(model: model, hoverChanged: { _ in })
             try await snapshot(panel, appearance: appearance,
                                to: directory.appendingPathComponent("today-\(name).png"))
+            try await snapshot(DeadlinePickerView(dueDate: .constant(now.addingTimeInterval(86_400))),
+                               appearance: appearance, to: directory.appendingPathComponent("calendar-\(name).png"), height: 570)
         }
-        try await snapshot(TodayView(model: model, searchQuery: .constant("командой"), selectedCategoryID: .constant(nil))
+        try await snapshot(TodayView(model: model, searchQuery: .constant(L10n.text("командой", "team")), selectedCategoryID: .constant(nil))
             .frame(width: 420, height: 440).background(TodayPalette.surface),
                      appearance: .aqua, to: directory.appendingPathComponent("search-result.png"), height: 440)
-        try await snapshot(HistoryView(model: model, searchQuery: .constant("отчет"), selectedCategoryID: nil)
+        try await snapshot(HistoryView(model: model, searchQuery: .constant(L10n.text("отчет", "report")), selectedCategoryID: nil)
             .frame(width: 420, height: 440).background(TodayPalette.surface),
                      appearance: .aqua, to: directory.appendingPathComponent("history-search.png"), height: 440)
-        try await snapshot(TodayView(model: model, searchQuery: .constant("ничего"), selectedCategoryID: .constant(nil))
+        try await snapshot(TodayView(model: model, searchQuery: .constant(L10n.text("ничего", "no match")), selectedCategoryID: .constant(nil))
             .frame(width: 420, height: 440).background(TodayPalette.surface),
                      appearance: .aqua, to: directory.appendingPathComponent("search-empty.png"), height: 440)
     }
@@ -85,7 +87,7 @@ struct InterfaceTests {
                                          height: CGFloat = 590) async throws {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: height),
                               styleMask: [.borderless], backing: .buffered, defer: false)
-        let host = NSHostingView(rootView: view.environment(\.locale, Locale(identifier: "ru_RU")))
+        let host = NSHostingView(rootView: view.environment(\.locale, L10n.locale))
         host.frame = NSRect(x: 0, y: 0, width: 420, height: height)
         window.contentView = host
         try await snapshot(window, appearance: appearance, to: url)

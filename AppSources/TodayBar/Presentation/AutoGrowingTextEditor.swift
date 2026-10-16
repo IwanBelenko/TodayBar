@@ -50,7 +50,7 @@ private final class PlaceholderTextView: NSTextView {
             menu.addItem(.separator())
         }
         let item = NSMenuItem(
-            title: "Скопировать задачу целиком",
+            title: L10n.text("Скопировать задачу целиком", "Copy entire task"),
             action: #selector(copyEntireText(_:)),
             keyEquivalent: ""
         )

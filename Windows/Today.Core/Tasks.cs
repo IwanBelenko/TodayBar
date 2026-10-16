@@ -26,12 +26,14 @@ public sealed record TaskCategory(Guid Id, string Name, string SystemImage = "fo
     public static TaskCategory[] Defaults =>
     [new(WorkID, "Работа", "briefcase"), new(PersonalID, "Личное", "person")];
     [JsonIgnore] public bool IsSystem => Id == WorkID || Id == PersonalID;
+    [JsonIgnore] public string DisplayName => Id == WorkID ? I18n.Text("Работа", "Work") :
+        Id == PersonalID ? I18n.Text("Личное", "Personal") : Name;
 }
 
 public static class TaskRules
 {
     public static readonly string[] Priorities = ["none", "low", "medium", "high"];
-    public static readonly string[] PriorityNames = ["Без приоритета", "Низкий · 1 огонёк", "Средний · 2 огонька", "Высокий · 3 огонька"];
+    public static string[] PriorityNames => [I18n.Text("Без приоритета", "No priority"), I18n.Text("Низкий · 1 огонёк", "Low · 1 flame"), I18n.Text("Средний · 2 огонька", "Medium · 2 flames"), I18n.Text("Высокий · 3 огонька", "High · 3 flames")];
     public static int Flames(string? priority) => priority switch { "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
 
     public static string Normalize(string value) => new(value.ToLowerInvariant().Normalize(NormalizationForm.FormD)
@@ -59,9 +61,9 @@ public static class TaskRules
     {
         if (!TimeOnly.TryParseExact(time.Trim(), ["H:mm", "HH:mm"], CultureInfo.InvariantCulture,
                 DateTimeStyles.None, out var clock))
-            throw new ArgumentException("Введите время от 00:00 до 23:59.");
+            throw new ArgumentException(I18n.Text("Введите время от 00:00 до 23:59.", "Enter a time from 00:00 to 23:59."));
         var local = DateTime.SpecifyKind(date.Date.Add(clock.ToTimeSpan()), DateTimeKind.Unspecified);
-        if (zone.IsInvalidTime(local)) throw new ArgumentException("Такого времени нет из-за перевода часов. Выберите другое.");
+        if (zone.IsInvalidTime(local)) throw new ArgumentException(I18n.Text("Такого времени нет из-за перевода часов. Выберите другое.", "This time does not exist due to daylight saving time. Choose another time."));
         return new DateTimeOffset(local, zone.GetUtcOffset(local));
     }
 }

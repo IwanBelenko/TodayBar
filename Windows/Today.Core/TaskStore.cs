@@ -23,7 +23,7 @@ public sealed class TaskStore
         categories = Read<List<TaskCategory>>("categories.json") ?? [];
         if (tasks.Any(t => t is null || t.Id == Guid.Empty || t.Title is null) || tasks.Select(t => t.Id).Distinct().Count() != tasks.Count ||
             categories.Any(c => c is null || c.Id == Guid.Empty || string.IsNullOrWhiteSpace(c.Name)) || categories.Select(c => c.Id).Distinct().Count() != categories.Count)
-            throw new InvalidDataException("В файле задач или разделов есть повреждённые записи. Исходные файлы не изменены.");
+            throw new InvalidDataException(I18n.Text("В файле задач или разделов есть повреждённые записи. Исходные файлы не изменены.", "The task or category file contains invalid entries. The original files have not been changed."));
         foreach (var category in TaskCategory.Defaults)
             if (categories.All(c => c.Id != category.Id)) categories.Add(category);
     }
@@ -33,7 +33,7 @@ public sealed class TaskStore
         var path = Path.Combine(directory, name);
         if (!File.Exists(path)) return default;
         return JsonSerializer.Deserialize<T>(File.ReadAllText(path), JsonOptions)
-            ?? throw new InvalidDataException($"Файл {name} пуст или повреждён. Он не был перезаписан.");
+            ?? throw new InvalidDataException(I18n.Text($"Файл {name} пуст или повреждён. Он не был перезаписан.", $"File {name} is empty or damaged. It has not been overwritten."));
     }
 
     private void Write<T>(string name, T value)
@@ -63,7 +63,7 @@ public sealed class TaskStore
     public TodoItem Add(string title, Guid? categoryID = null, DateTimeOffset? dueDate = null)
     {
         title = title.Trim();
-        if (title.Length == 0) throw new ArgumentException("Напишите задачу.");
+        if (title.Length == 0) throw new ArgumentException(I18n.Text("Напишите задачу.", "Enter a task."));
         ValidateCategory(categoryID);
         var stamp = now();
         var task = new TodoItem { Id = Guid.NewGuid(), Title = title, CreatedAt = stamp, ScheduledFor = stamp,
@@ -75,9 +75,9 @@ public sealed class TaskStore
     public void Update(Guid id, Func<TodoItem, TodoItem> change)
     {
         var index = tasks.FindIndex(t => t.Id == id);
-        if (index < 0) throw new ArgumentException("Задача больше не существует.");
+        if (index < 0) throw new ArgumentException(I18n.Text("Задача больше не существует.", "This task no longer exists."));
         var updated = change(tasks[index]) with { UpdatedAt = now() };
-        if (updated.Id != id || string.IsNullOrWhiteSpace(updated.Title)) throw new ArgumentException("Текст задачи не может быть пустым.");
+        if (updated.Id != id || string.IsNullOrWhiteSpace(updated.Title)) throw new ArgumentException(I18n.Text("Текст задачи не может быть пустым.", "Task text cannot be empty."));
         if (updated.CategoryID != tasks[index].CategoryID) ValidateCategory(updated.CategoryID);
         var replacement = tasks.ToList();
         replacement[index] = updated;
@@ -86,7 +86,7 @@ public sealed class TaskStore
 
     private void ValidateCategory(Guid? id)
     {
-        if (id.HasValue && categories.All(c => c.Id != id)) throw new ArgumentException("Выберите существующий раздел.");
+        if (id.HasValue && categories.All(c => c.Id != id)) throw new ArgumentException(I18n.Text("Выберите существующий раздел.", "Choose an existing category."));
     }
 
     public void Toggle(Guid id) => Update(id, t => t with { CompletedAt = t.IsCompleted ? null : now() });
@@ -98,8 +98,8 @@ public sealed class TaskStore
     public TaskCategory AddCategory(string name)
     {
         name = name.Trim();
-        if (name.Length == 0 || name.Length > 60) throw new ArgumentException("Название раздела — от 1 до 60 символов.");
-        if (categories.Any(c => TaskRules.Normalize(c.Name) == TaskRules.Normalize(name))) throw new ArgumentException("Такой раздел уже есть.");
+        if (name.Length == 0 || name.Length > 60) throw new ArgumentException(I18n.Text("Название раздела — от 1 до 60 символов.", "Category names must contain 1 to 60 characters."));
+        if (categories.Any(c => TaskRules.Normalize(c.Name) == TaskRules.Normalize(name) || TaskRules.Normalize(c.DisplayName) == TaskRules.Normalize(name))) throw new ArgumentException(I18n.Text("Такой раздел уже есть.", "This category already exists."));
         var category = new TaskCategory(Guid.NewGuid(), name);
         var replacement = categories.Append(category).ToList();
         Write("categories.json", replacement);
@@ -109,7 +109,7 @@ public sealed class TaskStore
 
     public void DeleteCategory(Guid id)
     {
-        if (Category(id)?.IsSystem != false) throw new ArgumentException("Этот раздел нельзя удалить.");
+        if (Category(id)?.IsSystem != false) throw new ArgumentException(I18n.Text("Этот раздел нельзя удалить.", "This category cannot be deleted."));
         // Save references first: interruption cannot leave tasks pointing at a deleted category.
         SaveTasks(tasks.Select(t => t.CategoryID == id ? t with { CategoryID = null, UpdatedAt = now() } : t).ToList());
         var replacement = categories.Where(c => c.Id != id).ToList();

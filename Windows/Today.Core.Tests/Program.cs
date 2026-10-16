@@ -1,9 +1,32 @@
 using System.Text.Json;
+using System.Globalization;
 using Today.Core;
 
 var stamp = new DateTimeOffset(2026, 10, 15, 12, 0, 0, TimeSpan.Zero);
 var tests = new (string Name, Action Test)[]
 {
+    ("Language follows UI culture without changing stored data", () => {
+        var previous = CultureInfo.CurrentUICulture;
+        try {
+            foreach (var language in new[] { "ru-RU", "ru-BY", "en-US", "fr-FR", "uk-UA" }) {
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+                var russian = language.StartsWith("ru-", StringComparison.Ordinal);
+                Check(I18n.Text("Сегодня", "Today") == (russian ? "Сегодня" : "Today"));
+                var category = TaskCategory.Defaults[0];
+                Check(category.DisplayName == (russian ? "Работа" : "Work"));
+                Check(new TaskCategory(Guid.NewGuid(), "Работа").DisplayName == "Работа");
+                var json = JsonSerializer.Serialize(category, TaskStore.JsonOptions);
+                Check(!json.Contains("displayName") && JsonSerializer.Deserialize<TaskCategory>(json, TaskStore.JsonOptions) == category);
+                Check(category.Name == "Работа");
+                WithStore((store, path) => {
+                    Throws<ArgumentException>(() => store.AddCategory(category.DisplayName));
+                    store.Add("Мой текст\nMy text", category.Id);
+                    Check(new TaskStore(path).Tasks.Single().Title == "Мой текст\nMy text");
+                });
+            }
+            Check(!I18n.IsRussian(CultureInfo.InvariantCulture));
+        } finally { CultureInfo.CurrentUICulture = previous; }
+    }),
     ("Reads Mac JSON without priority", () => {
         var task = JsonSerializer.Deserialize<TodoItem>("""
             {"id":"A91B6B75-5BF2-45F4-B00D-1C24F6DBF003","title":"Отчёт\nкоманде","createdAt":"2026-10-15T09:00:00Z",

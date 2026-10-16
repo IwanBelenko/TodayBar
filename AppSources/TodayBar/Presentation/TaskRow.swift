@@ -29,7 +29,7 @@ struct TaskRow: View {
                         .padding(.top, 1)
                         .transition(.opacity)
                         .contextMenu {
-                            Button("Скопировать задачу") {
+                            Button(L10n.text("Скопировать задачу", "Copy task")) {
                                 TaskClipboard.copy(task.title)
                             }
                         }
@@ -37,7 +37,7 @@ struct TaskRow: View {
                     AutoGrowingTextEditor(
                         text: $title,
                         height: $editorHeight,
-                        placeholder: "Название дела",
+                        placeholder: L10n.text("Название дела", "Task title"),
                         minHeight: 22,
                         font: .systemFont(ofSize: 16),
                         offersCopyEntireText: true,
@@ -96,7 +96,7 @@ struct TaskRow: View {
         HStack(spacing: 8) {
             TaskPriorityIndicator(priority: task.priority)
             if let category = model.category(for: task.categoryID) {
-                Label(category.name, systemImage: category.systemImage)
+                Label(category.displayName, systemImage: category.systemImage)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -107,7 +107,7 @@ struct TaskRow: View {
     private var deadline: some View {
         if let dueDate = task.dueDate {
             TaskDueDateLabel(dueDate: dueDate, isCompleted: task.isCompleted)
-                .help("Изменить срок можно в меню •••")
+                .help(L10n.text("Изменить срок можно в меню •••", "Change the due date in the ••• menu"))
         }
     }
 
@@ -133,7 +133,7 @@ struct TaskRow: View {
         }
         .buttonStyle(.plain)
         .padding(.top, 2)
-        .accessibilityLabel(task.isCompleted ? "Вернуть в список" : "Отметить выполненным")
+        .accessibilityLabel(task.isCompleted ? L10n.text("Вернуть в список", "Restore task") : L10n.text("Отметить выполненным", "Complete task"))
     }
 
     private func finishEditing() {

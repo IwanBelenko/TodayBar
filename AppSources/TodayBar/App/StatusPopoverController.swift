@@ -64,7 +64,7 @@ final class StatusPopoverController: NSObject {
 
     private func configureStatusItem() {
         guard let button = statusItem.button else { return }
-        button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: "Today — список дел")
+        button.image = NSImage(systemSymbolName: "checkmark.circle", accessibilityDescription: L10n.text("Today — список дел", "Today — tasks"))
         button.imagePosition = .imageOnly
         button.target = self
         button.action = #selector(statusItemPressed)
@@ -120,7 +120,7 @@ final class StatusPopoverController: NSObject {
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
-            title: "Завершить Today",
+            title: L10n.text("Завершить Today", "Quit Today"),
             action: #selector(quitApplication),
             keyEquivalent: "q"
         )
@@ -145,7 +145,7 @@ final class StatusPopoverController: NSObject {
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = "Не удалось изменить автозапуск"
+            alert.messageText = L10n.text("Не удалось изменить автозапуск", "Could not change startup settings")
             alert.informativeText = error.localizedDescription
             alert.addButton(withTitle: "OK")
             alert.runModal()

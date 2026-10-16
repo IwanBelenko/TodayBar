@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct RootView: View {
-    enum Section: String, CaseIterable, Identifiable {
-        case today = "Сегодня"
-        case history = "История"
+    enum Section: CaseIterable, Identifiable {
+        case today, history
 
         var id: Self { self }
+        var title: String { self == .today ? L10n.text("Сегодня", "Today") : L10n.text("История", "History") }
     }
 
     @ObservedObject var model: TaskListViewModel
@@ -60,12 +60,12 @@ struct RootView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Сегодня")
+                Text(L10n.text("Сегодня", "Today"))
                     .font(.system(size: 21, weight: .semibold))
                 ViewThatFits(in: .horizontal) {
-                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                    Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(L10n.locale)))
                         .fixedSize()
-                    Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day().month(.wide)))
+                    Text(Date.now.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(L10n.locale)))
                         .fixedSize()
                 }
                     .font(.system(size: 14))
@@ -76,10 +76,10 @@ struct RootView: View {
             searchField
 
             Menu {
-                Button("Найти задачу") { isSearchFocused = true }
+                Button(L10n.text("Найти задачу", "Find a task")) { isSearchFocused = true }
                     .keyboardShortcut("f", modifiers: .command)
                 Divider()
-                Button("Завершить Today") {
+                Button(L10n.text("Завершить Today", "Quit Today")) {
                     NSApplication.shared.terminate(nil)
                 }
             } label: {
@@ -92,7 +92,7 @@ struct RootView: View {
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
             .fixedSize()
-            .help("Меню")
+            .help(L10n.text("Меню", "Menu"))
         }
         .padding(.horizontal, 19)
         .padding(.top, 18)
@@ -104,11 +104,11 @@ struct RootView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
-            TextField("Поиск задач", text: $searchQuery)
+            TextField(L10n.text("Поиск задач", "Search tasks"), text: $searchQuery)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .focused($isSearchFocused)
-                .accessibilityLabel("Поиск задач в выбранной вкладке")
+                .accessibilityLabel(L10n.text("Поиск задач в выбранной вкладке", "Search tasks in the selected tab"))
                 .onExitCommand {
                     if searchQuery.isEmpty { isSearchFocused = false }
                     else { searchQuery = "" }
@@ -122,7 +122,7 @@ struct RootView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Очистить поиск")
+                .accessibilityLabel(L10n.text("Очистить поиск", "Clear search"))
             }
         }
         .padding(.horizontal, 9)
@@ -132,7 +132,7 @@ struct RootView: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(isSearchFocused ? Color.primary.opacity(0.4) : TodayPalette.border, lineWidth: 0.7)
         }
-        .help("Поиск по тексту задач · ⌘F")
+        .help(L10n.text("Поиск по тексту задач · ⌘F", "Search task text · ⌘F"))
     }
 
     private var tabs: some View {
@@ -145,7 +145,7 @@ struct RootView: View {
                         }
                     } label: {
                         HStack(spacing: 4) {
-                            Text(item.rawValue)
+                            Text(item.title)
                             if item == .today {
                                 Text("\(pendingCount)")
                                     .foregroundStyle(.secondary)
@@ -190,7 +190,7 @@ struct RootView: View {
             }
             .frame(width: 42, height: 3)
 
-            Text("\(completedCount) из \(todayTotal)")
+            Text(L10n.text("\(completedCount) из \(todayTotal)", "\(completedCount) of \(todayTotal)"))
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
                 .monospacedDigit()
@@ -217,10 +217,10 @@ struct RootView: View {
     private var footer: some View {
         HStack {
             if overdueCount > 0 {
-                Label("Просрочено: \(overdueCount)", systemImage: "exclamationmark.circle.fill")
+                Label(L10n.text("Просрочено: \(overdueCount)", "Overdue: \(overdueCount)"), systemImage: "exclamationmark.circle.fill")
                     .foregroundStyle(.red)
             } else {
-                Label("На этом Mac", systemImage: "lock")
+                Label(L10n.text("На этом Mac", "On this Mac"), systemImage: "lock")
             }
             Spacer()
             Text("Today")

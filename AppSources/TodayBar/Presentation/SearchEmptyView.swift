@@ -8,13 +8,13 @@ struct SearchEmptyView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 22))
                 .foregroundStyle(.secondary)
-            Text("Ничего не найдено")
+            Text(L10n.text("Ничего не найдено", "No results"))
                 .font(.system(size: 16, weight: .medium))
-            Text("Попробуйте другие слова\nили проверьте выбранный раздел")
+            Text(L10n.text("Попробуйте другие слова\nили проверьте выбранный раздел", "Try different words\nor check the selected category"))
                 .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-            Button("Сбросить поиск") { query = "" }
+            Button(L10n.text("Сбросить поиск", "Clear search")) { query = "" }
                 .buttonStyle(.plain)
                 .font(.system(size: 13.5, weight: .medium))
                 .padding(.horizontal, 14)

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -20,54 +21,64 @@ internal static class SmokeTests
         var data = Path.Combine(Path.GetTempPath(), "today-ui-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(data); Directory.CreateDirectory(output);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var originalCulture = CultureInfo.CurrentUICulture;
+        var outputRoot = output;
         try
         {
             CheckTrayActivation();
-            var store = new TaskStore(data);
-            var none = store.Add("Купить новую книгу", TaskCategory.PersonalID);
-            var low = store.Add("Записаться на тренировку", TaskCategory.PersonalID);
-            store.Update(low.Id, t => t with { Priority = "low" });
-            var medium = store.Add("Обсудить с командой\nследующий этап проекта", TaskCategory.WorkID);
-            store.Update(medium.Id, t => t with { Priority = "medium" });
-            var high = store.Add("Подготовить план на неделю", TaskCategory.WorkID, DateTimeOffset.Now.AddDays(1));
-            store.Update(high.Id, t => t with { Priority = "high" });
-            var completed = store.Add("Отправить отчёт", TaskCategory.WorkID); store.Toggle(completed.Id);
-            var personalDone = store.Add("Семейный ужин", TaskCategory.PersonalID); store.Toggle(personalDone.Id);
-            var family = store.AddCategory("Семья");
-            var familyDone = store.Add("Позвонить родителям", family.Id); store.Toggle(familyDone.Id);
-            var window = new MainWindow(store, () => { }); window.Show(); Pump();
-            Check(window.VisibleTaskIDs.Take(4).SequenceEqual(new[] { high.Id, medium.Id, low.Id, none.Id }), "priority ordering");
-            Capture(window, output, "today-light", false); Capture(window, output, "today-dark", true);
-            window.Search.Text = "КОМАНДОЙ этап"; Pump(); Check(window.VisibleTaskIDs.SequenceEqual(new[] { medium.Id }), "multiline search");
-            Capture(window, output, "search", false);
-            window.SetHistory(true); window.Search.Text = "отчет"; Pump(); Check(window.VisibleTaskIDs.SequenceEqual(new[] { completed.Id }), "history search");
-            Capture(window, output, "history", false);
-            window.Search.Clear(); window.SetCategory(TaskCategory.PersonalID); Pump();
-            Check(window.VisibleTaskIDs.SequenceEqual(new[] { personalDone.Id }) && window.PendingCount == 2 && window.CompletedCount == 1, "personal history and counters");
-            window.SetCategory(family.Id); Pump();
-            Check(window.VisibleTaskIDs.SequenceEqual(new[] { familyDone.Id }), "custom section history");
-            Capture(window, output, "history-family", true);
-            window.SetHistory(false); window.SetHistory(true); Pump();
-            Check(window.VisibleTaskIDs.SequenceEqual(new[] { familyDone.Id }), "section survives tab switching");
-            window.SetCategory(null); Pump(); Check(window.VisibleTaskIDs.Count == 3, "all history");
-            window.SetHistory(false); window.Search.Clear();
-            var menu = window.TaskMenu(none.Id);
-            var highPriority = (MenuItem)((MenuItem)menu.Items[0]).Items[3];
-            highPriority.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); Pump();
-            Check(store.Tasks.First(t => t.Id == none.Id).FlameCount == 3 && window.VisibleTaskIDs[0] == none.Id, "priority menu action");
-            window.Composer.Text = "Первая строка\nВторая строка"; window.AddTask(); Pump();
-            Check(store.Tasks.Last().Title == "Первая строка\nВторая строка" && window.Composer.Text == "", "composer submission");
-            var clipboardMenu = window.TaskMenu(medium.Id);
-            var copy = clipboardMenu.Items.OfType<MenuItem>().Single(item => (string)item.Header == "Скопировать задачу");
-            copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); Check(Clipboard.GetText() == medium.Title, "native clipboard");
-            var deadline = new DeadlineWindow(null) { Owner = window }; deadline.Show(); Pump();
-            deadline.TimeField.Text = "14:35"; Check(deadline.TimeField.Text == "14:35", "editable time");
-            Capture(deadline, output, "calendar-light", false); Capture(deadline, output, "calendar-dark", true); deadline.Close();
+            foreach (var language in new[] { "ru-RU", "en-US" })
+            {
+                CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+                output = Path.Combine(outputRoot, language);
+                Directory.CreateDirectory(output);
+                var store = new TaskStore(Path.Combine(data, language));
+                var none = store.Add(I18n.Text("Купить новую книгу", "Buy a new book"), TaskCategory.PersonalID);
+                var low = store.Add(I18n.Text("Записаться на тренировку", "Book a workout"), TaskCategory.PersonalID);
+                store.Update(low.Id, t => t with { Priority = "low" });
+                var medium = store.Add(I18n.Text("Обсудить с командой\nследующий этап проекта", "Discuss the next project phase\nwith the team"), TaskCategory.WorkID);
+                store.Update(medium.Id, t => t with { Priority = "medium" });
+                var high = store.Add(I18n.Text("Подготовить план на неделю", "Plan the week"), TaskCategory.WorkID, DateTimeOffset.Now.AddDays(1));
+                store.Update(high.Id, t => t with { Priority = "high" });
+                var completed = store.Add(I18n.Text("Отправить отчёт", "Send the report"), TaskCategory.WorkID); store.Toggle(completed.Id);
+                var personalDone = store.Add(I18n.Text("Семейный ужин", "Family dinner"), TaskCategory.PersonalID); store.Toggle(personalDone.Id);
+                var family = store.AddCategory(I18n.Text("Семья", "Family"));
+                var familyDone = store.Add(I18n.Text("Позвонить родителям", "Call my parents"), family.Id); store.Toggle(familyDone.Id);
+                var window = new MainWindow(store, () => { }); window.Show(); Pump();
+                Check(window.VisibleTaskIDs.Take(4).SequenceEqual(new[] { high.Id, medium.Id, low.Id, none.Id }), "priority ordering");
+                Capture(window, output, "today-light", false); Capture(window, output, "today-dark", true);
+                window.Search.Text = I18n.Text("КОМАНДОЙ этап", "TEAM phase"); Pump(); Check(window.VisibleTaskIDs.SequenceEqual(new[] { medium.Id }), "multiline search");
+                Capture(window, output, "search", false);
+                window.SetHistory(true); window.Search.Text = I18n.Text("отчет", "report"); Pump(); Check(window.VisibleTaskIDs.SequenceEqual(new[] { completed.Id }), "history search");
+                Capture(window, output, "history", false);
+                window.Search.Clear(); window.SetCategory(TaskCategory.PersonalID); Pump();
+                Check(window.VisibleTaskIDs.SequenceEqual(new[] { personalDone.Id }) && window.PendingCount == 2 && window.CompletedCount == 1, "personal history and counters");
+                window.SetCategory(family.Id); Pump();
+                Check(window.VisibleTaskIDs.SequenceEqual(new[] { familyDone.Id }), "custom section history");
+                Capture(window, output, "history-family", true);
+                window.SetHistory(false); window.SetHistory(true); Pump();
+                Check(window.VisibleTaskIDs.SequenceEqual(new[] { familyDone.Id }), "section survives tab switching");
+                window.SetCategory(null); Pump(); Check(window.VisibleTaskIDs.Count == 3, "all history");
+                window.SetHistory(false); window.Search.Clear();
+                var menu = window.TaskMenu(none.Id);
+                var highPriority = (MenuItem)((MenuItem)menu.Items[0]).Items[3];
+                highPriority.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); Pump();
+                Check(store.Tasks.First(t => t.Id == none.Id).FlameCount == 3 && window.VisibleTaskIDs[0] == none.Id, "priority menu action");
+                window.Composer.Text = "Первая строка\nВторая строка"; window.AddTask(); Pump();
+                Check(store.Tasks.Last().Title == "Первая строка\nВторая строка" && window.Composer.Text == "", "composer submission");
+                var clipboardMenu = window.TaskMenu(medium.Id);
+                var copy = clipboardMenu.Items.OfType<MenuItem>().Single(item => (string)item.Header == I18n.Text("Скопировать задачу", "Copy task"));
+                copy.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent)); Check(Clipboard.GetText() == medium.Title, "native clipboard");
+                var deadline = new DeadlineWindow(null) { Owner = window }; deadline.Show(); Pump();
+                deadline.TimeField.Text = "14:35"; Check(deadline.TimeField.Text == "14:35", "editable time");
+                Capture(deadline, output, "calendar-light", false); Capture(deadline, output, "calendar-dark", true); deadline.Close();
+                window.Hide();
+                Console.WriteLine("PASS UI language: " + language);
+            }
             Console.WriteLine("PASS Windows UI: click-only tray activation, startup, themes, sorting, search, history, menu action, composer, clipboard, calendar");
             app.Shutdown(); return 0;
         }
         catch (Exception error) { Console.Error.WriteLine(error); app.Shutdown(); return 1; }
-        finally { Directory.Delete(data, recursive: true); }
+        finally { CultureInfo.CurrentUICulture = originalCulture; Directory.Delete(data, recursive: true); }
     }
     private static void CheckTrayActivation()
     {

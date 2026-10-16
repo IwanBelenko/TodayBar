@@ -24,7 +24,9 @@ jobs:
         run: ./scripts/build-app.sh
 
       - name: Test macOS app
-        run: ./scripts/test.sh
+        run: |
+          TODAYBAR_TEST_LANGUAGE=ru ./scripts/test.sh
+          TODAYBAR_TEST_LANGUAGE=en ./scripts/test.sh
 
       - name: Package app
         run: ditto -c -k --sequesterRsrc --keepParent dist/Today.app Today-universal.zip

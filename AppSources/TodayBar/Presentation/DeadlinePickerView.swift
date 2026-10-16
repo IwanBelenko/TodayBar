@@ -15,7 +15,7 @@ struct DeadlinePickerView: View {
     @State private var minuteText: String
     @FocusState private var focusedTimeField: TimeField?
 
-    private let weekdaySymbols = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+    private let weekdaySymbols = [L10n.text("Пн", "Mon"), L10n.text("Вт", "Tue"), L10n.text("Ср", "Wed"), L10n.text("Чт", "Thu"), L10n.text("Пт", "Fri"), L10n.text("Сб", "Sat"), L10n.text("Вс", "Sun")]
 
     init(dueDate: Binding<Date?>) {
         let initialDate = dueDate.wrappedValue ?? Self.defaultDate()
@@ -55,13 +55,13 @@ struct DeadlinePickerView: View {
 
     private var header: some View {
         HStack {
-            Text("Дата и время")
+            Text(L10n.text("Дата и время", "Date and time"))
                 .font(.system(size: 16, weight: .semibold))
 
             Spacer()
 
             if dueDate != nil {
-                Button("Убрать") {
+                Button(L10n.text("Убрать", "Remove")) {
                     dueDate = nil
                     dismiss()
                 }
@@ -74,9 +74,9 @@ struct DeadlinePickerView: View {
 
     private var quickDates: some View {
         HStack(spacing: 7) {
-            quickDateButton("Сегодня", daysFromToday: 0, hour: 18)
-            quickDateButton("Завтра", daysFromToday: 1, hour: 9)
-            quickDateButton("Через неделю", daysFromToday: 7, hour: 9)
+            quickDateButton(L10n.text("Сегодня", "Today"), daysFromToday: 0, hour: 18)
+            quickDateButton(L10n.text("Завтра", "Tomorrow"), daysFromToday: 1, hour: 9)
+            quickDateButton(L10n.text("Через неделю", "In a week"), daysFromToday: 7, hour: 9)
         }
     }
 
@@ -182,7 +182,7 @@ struct DeadlinePickerView: View {
 
     private var digitalTime: some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text("Время")
+            Text(L10n.text("Время", "Time"))
                 .font(.system(size: 11.5, weight: .medium))
                 .foregroundStyle(.secondary)
 
@@ -209,7 +209,7 @@ struct DeadlinePickerView: View {
                 timeButton(systemImage: "plus", delta: 15)
             }
 
-            Text(focusedTimeField == nil ? "Нажмите на время для ручного ввода" : "Введите время и нажмите Enter")
+            Text(focusedTimeField == nil ? L10n.text("Нажмите на время для ручного ввода", "Click the time to type it") : L10n.text("Введите время и нажмите Enter", "Type the time and press Enter"))
                 .font(.system(size: 10.5))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -266,7 +266,7 @@ struct DeadlinePickerView: View {
 
             Spacer()
 
-            Button("Готово") {
+            Button(L10n.text("Готово", "Done")) {
                 dueDate = draftDate
                 dismiss()
             }
@@ -316,11 +316,11 @@ struct DeadlinePickerView: View {
     }
 
     private var monthTitle: String {
-        displayedMonth.formatted(.dateTime.month(.wide).year())
+        displayedMonth.formatted(.dateTime.month(.wide).year().locale(L10n.locale))
     }
 
     private var summaryText: String {
-        draftDate.formatted(.dateTime.day().month(.wide).hour().minute())
+        draftDate.formatted(.dateTime.day().month(.wide).hour().minute().locale(L10n.locale))
     }
 
     private func isSelected(_ date: Date) -> Bool {

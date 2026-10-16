@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media;
 using Microsoft.Win32;
+using Today.Core;
 
 namespace Today.Windows;
 
@@ -127,7 +128,7 @@ internal static class Ui
     public static StackPanel Flames(int count)
     {
         var panel = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
-        Name(panel, $"Приоритет: {count} из 3");
+        Name(panel, I18n.Text($"Приоритет: {count} из 3", $"Priority: {count} of 3"));
         for (var index = 0; index < count; index++)
         {
             var path = new System.Windows.Shapes.Path { Width = 11, Height = 15, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 3, 0),

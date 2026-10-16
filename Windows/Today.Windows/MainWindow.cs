@@ -20,7 +20,7 @@ internal sealed class MainWindow : Window
     internal readonly TextBox Composer = new() { AcceptsReturn = true, TextWrapping = TextWrapping.Wrap,
         MinHeight = 46, MaxHeight = 120, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
     private readonly StackPanel rows = new(), categories = new() { Orientation = Orientation.Horizontal };
-    private readonly TextBlock error = Ui.Text("", 13), footer = Ui.Text("На этом ПК", 13, "Muted"), progress = Ui.Text("", 13, "Muted");
+    private readonly TextBlock error = Ui.Text("", 13), footer = Ui.Text(I18n.Text("На этом ПК", "On this PC"), 13, "Muted"), progress = Ui.Text("", 13, "Muted");
     private readonly Button todayButton, historyButton, composeCategory, composeDue, addButton;
     private readonly TextBlock date = Ui.Text("", 14, "Muted");
     private readonly ScrollViewer list;
@@ -65,30 +65,30 @@ internal sealed class MainWindow : Window
         ((TextBlock)mark.Child).HorizontalAlignment = HorizontalAlignment.Center;
         header.Children.Add(mark);
         var heading = new StackPanel { Margin = new Thickness(4, 0, 4, 0) };
-        var title = Ui.Text("Сегодня", 25); title.FontWeight = FontWeights.SemiBold;
+        var title = Ui.Text(I18n.Text("Сегодня", "Today"), 25); title.FontWeight = FontWeights.SemiBold;
         heading.Children.Add(title); heading.Children.Add(date);
         Grid.SetColumn(heading, 1); header.Children.Add(heading);
         var searchGrid = new Grid();
         searchGrid.ColumnDefinitions.Add(new ColumnDefinition());
         searchGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(26) });
-        Search.ToolTip = "Поиск задач · Ctrl+F"; Ui.Name(Search, "Поиск задач");
+        Search.ToolTip = I18n.Text("Поиск задач · Ctrl+F", "Search tasks · Ctrl+F"); Ui.Name(Search, I18n.Text("Поиск задач", "Search tasks"));
         searchGrid.Children.Add(Search);
-        var searchHint = Ui.Text("⌕ Поиск задач", 13, "Muted"); searchHint.IsHitTestVisible = false;
+        var searchHint = Ui.Text(I18n.Text("⌕ Поиск задач", "⌕ Search tasks"), 13, "Muted"); searchHint.IsHitTestVisible = false;
         searchGrid.Children.Add(searchHint);
-        var clearSearch = Ui.Button("×", "Очистить поиск", () => Search.Clear());
+        var clearSearch = Ui.Button("×", I18n.Text("Очистить поиск", "Clear search"), () => Search.Clear());
         clearSearch.Visibility = Visibility.Collapsed;
         clearSearch.Padding = new Thickness(0); Grid.SetColumn(clearSearch, 1); searchGrid.Children.Add(clearSearch);
         var searchCard = Ui.Card(searchGrid, 10); searchCard.Height = 34; searchCard.Padding = new Thickness(7, 0, 0, 0);
         Grid.SetColumn(searchCard, 2); header.Children.Add(searchCard);
-        var appMenu = Ui.Button("⋯", "Меню приложения", () => OpenMenu(BuildAppMenu(), header));
+        var appMenu = Ui.Button("⋯", I18n.Text("Меню приложения", "App menu"), () => OpenMenu(BuildAppMenu(), header));
         appMenu.Padding = new Thickness(0); Grid.SetColumn(appMenu, 3); header.Children.Add(appMenu);
         root.Children.Add(header);
 
         var tabs = new Grid { Margin = new Thickness(0, 0, 0, 8) };
         tabs.ColumnDefinitions.Add(new ColumnDefinition()); tabs.ColumnDefinitions.Add(new ColumnDefinition());
         tabs.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        todayButton = Ui.Button("Сегодня", "Задачи на сегодня", () => SetHistory(false));
-        historyButton = Ui.Button("История", "История выполненных задач", () => SetHistory(true));
+        todayButton = Ui.Button(I18n.Text("Сегодня", "Today"), I18n.Text("Задачи на сегодня", "Today's tasks"), () => SetHistory(false));
+        historyButton = Ui.Button(I18n.Text("История", "History"), I18n.Text("История выполненных задач", "Completed task history"), () => SetHistory(true));
         todayButton.FontSize = historyButton.FontSize = 17;
         tabs.Children.Add(todayButton); Grid.SetColumn(historyButton, 1); tabs.Children.Add(historyButton);
         progress.Margin = new Thickness(12, 0, 2, 0); Grid.SetColumn(progress, 2); tabs.Children.Add(progress);
@@ -103,23 +103,23 @@ internal sealed class MainWindow : Window
         var composerGrid = new Grid { Margin = new Thickness(12) };
         composerGrid.RowDefinitions.Add(new RowDefinition()); composerGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         composerGrid.ColumnDefinitions.Add(new ColumnDefinition()); composerGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
-        Composer.ToolTip = "Новое дело. Enter — добавить, Shift+Enter — новая строка"; Ui.Name(Composer, "Новое дело");
+        Composer.ToolTip = I18n.Text("Новое дело. Enter — добавить, Shift+Enter — новая строка", "New task. Enter to add, Shift+Enter for a new line"); Ui.Name(Composer, I18n.Text("Новое дело", "New task"));
         composerGrid.Children.Add(Composer);
-        var composerHint = Ui.Text("＋ Новое дело…", 17, "Muted"); composerHint.VerticalAlignment = VerticalAlignment.Top;
+        var composerHint = Ui.Text(I18n.Text("＋ Новое дело…", "＋ New task…"), 17, "Muted"); composerHint.VerticalAlignment = VerticalAlignment.Top;
         composerHint.Margin = new Thickness(2, 2, 0, 0); composerHint.IsHitTestVisible = false; composerGrid.Children.Add(composerHint);
-        addButton = Ui.Button("↑", "Добавить задачу", AddTask); addButton.FontSize = 22; addButton.Padding = new Thickness(0);
+        addButton = Ui.Button("↑", I18n.Text("Добавить задачу", "Add task"), AddTask); addButton.FontSize = 22; addButton.Padding = new Thickness(0);
         addButton.Height = 34; addButton.VerticalAlignment = VerticalAlignment.Top;
         addButton.SetResourceReference(BackgroundProperty, "Hover");
         Grid.SetColumn(addButton, 1); composerGrid.Children.Add(addButton);
         var toolbar = new Grid { Margin = new Thickness(0, 10, 0, 0) };
         toolbar.ColumnDefinitions.Add(new ColumnDefinition()); toolbar.ColumnDefinitions.Add(new ColumnDefinition());
-        composeCategory = Ui.Button("Работа", "Раздел новой задачи", () => OpenMenu(CategoryMenu(id => { newCategory = id; UpdateComposer(); }), composeCategory!));
-        composeDue = Ui.Button("＋ Срок", "Срок новой задачи", () => PickDue(newDue, due => { newDue = due; UpdateComposer(); }));
+        composeCategory = Ui.Button(I18n.Text("Работа", "Work"), I18n.Text("Раздел новой задачи", "New task category"), () => OpenMenu(CategoryMenu(id => { newCategory = id; UpdateComposer(); }), composeCategory!));
+        composeDue = Ui.Button(I18n.Text("＋ Срок", "＋ Due date"), I18n.Text("Срок новой задачи", "New task due date"), () => PickDue(newDue, due => { newDue = due; UpdateComposer(); }));
         composeCategory.FontSize = composeDue.FontSize = 14;
         toolbar.Children.Add(composeCategory); Grid.SetColumn(composeDue, 1); toolbar.Children.Add(composeDue);
         Grid.SetRow(toolbar, 1); Grid.SetColumnSpan(toolbar, 2); composerGrid.Children.Add(toolbar);
         var composerCard = Ui.Card(composerGrid, 22); Put(root, composerCard, 4);
-        var hint = Ui.Text("Enter — добавить     Shift+Enter — новая строка", 12, "Muted");
+        var hint = Ui.Text(I18n.Text("Enter — добавить     Shift+Enter — новая строка", "Enter to add     Shift+Enter for a new line"), 12, "Muted");
         hint.Margin = new Thickness(4, 7, 0, 8); Put(root, hint, 5);
         var bottom = new StackPanel(); bottom.Children.Add(Ui.Line());
         error.TextWrapping = TextWrapping.Wrap; error.Margin = new Thickness(0, 8, 0, 0); error.Visibility = Visibility.Collapsed;
@@ -154,18 +154,18 @@ internal sealed class MainWindow : Window
 
     internal void Refresh()
     {
-        date.Text = DateTime.Now.ToString("dddd, d MMM", CultureInfo.GetCultureInfo("ru-RU"));
-        todayButton.Content = $"Сегодня {PendingCount}";
+        date.Text = DateTime.Now.ToString("dddd, d MMM", I18n.Culture);
+        todayButton.Content = I18n.Text($"Сегодня {PendingCount}", $"Today {PendingCount}");
         todayButton.SetResourceReference(BackgroundProperty, history ? "Surface" : "Hover");
         historyButton.SetResourceReference(BackgroundProperty, history ? "Hover" : "Surface");
         var done = CompletedCount;
-        progress.Text = $"{done} из {PendingCount + done}";
+        progress.Text = I18n.Text($"{done} из {PendingCount + done}", $"{done} of {PendingCount + done}");
         var overdue = store.Tasks.Count(t => !t.IsCompleted && t.DueDate < DateTimeOffset.Now && TaskRules.Matches(t, "", selectedCategory));
-        footer.Text = overdue > 0 ? $"Просрочено: {overdue}   ·   На этом ПК" : "На этом ПК                                 Today";
+        footer.Text = overdue > 0 ? I18n.Text($"Просрочено: {overdue}   ·   На этом ПК", $"Overdue: {overdue}   ·   On this PC") : I18n.Text("На этом ПК                                 Today", "On this PC                                 Today");
         categories.Children.Clear();
-        AddCategoryChip(null, "Все");
-        foreach (var category in store.Categories) AddCategoryChip(category.Id, category.Name);
-        categories.Children.Add(Ui.Button("+", "Новый раздел", AddCategory));
+        AddCategoryChip(null, I18n.Text("Все", "All"));
+        foreach (var category in store.Categories) AddCategoryChip(category.Id, category.DisplayName);
+        categories.Children.Add(Ui.Button("+", I18n.Text("Новый раздел", "New category"), AddCategory));
         UpdateComposer(); RenderRows();
     }
 
@@ -177,10 +177,10 @@ internal sealed class MainWindow : Window
         if (store.Category(id)?.IsSystem == false)
         {
             var menu = new ContextMenu(); Ui.ApplyTheme(menu);
-            menu.Items.Add(Ui.Menu("Удалить раздел…", () =>
+            menu.Items.Add(Ui.Menu(I18n.Text("Удалить раздел…", "Delete category…"), () =>
             {
                 HasDialog = true;
-                var confirmed = MessageBox.Show(this, $"Удалить раздел «{name}»? Задачи останутся в «Все».", "Today", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+                var confirmed = MessageBox.Show(this, I18n.Text($"Удалить раздел «{name}»? Задачи останутся в «Все».", $"Delete “{name}”? Its tasks will stay in All."), "Today", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
                 HasDialog = false;
                 if (confirmed) Run(() => { store.DeleteCategory(id!.Value); if (selectedCategory == id) selectedCategory = null; if (newCategory == id) newCategory = TaskCategory.WorkID; });
             }));
@@ -203,15 +203,16 @@ internal sealed class MainWindow : Window
             {
                 foreach (var group in TaskRules.History(matches, TimeZoneInfo.Local).GroupBy(t => TaskRules.LocalDay(t.CompletedAt!.Value, TimeZoneInfo.Local)))
                 {
-                    var label = Ui.Text(group.Key.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU")), 14, "Muted");
+                    var label = Ui.Text(group.Key.ToString("d MMMM yyyy", I18n.Culture), 14, "Muted");
                     label.Margin = new Thickness(10, 12, 0, 8); rows.Children.Add(label);
                     foreach (var task in group) { rows.Children.Add(TaskRow(task)); visible.Add(task.Id); }
                 }
                 if (visible.Count > 0 && string.IsNullOrWhiteSpace(Search.Text))
-                    rows.Children.Add(Ui.Button("Очистить историю…", "Удалить выполненные задачи выбранного раздела", () =>
+                    rows.Children.Add(Ui.Button(I18n.Text("Очистить историю…", "Clear history…"), I18n.Text("Удалить выполненные задачи выбранного раздела", "Delete completed tasks in this category"), () =>
                     {
                         HasDialog = true;
-                        var message = selectedCategory.HasValue ? $"Удалить выполненные задачи из «{store.Category(selectedCategory)?.Name}»? История остальных разделов сохранится." : "Удалить все выполненные задачи? Это действие нельзя отменить.";
+                        var name = store.Category(selectedCategory)?.DisplayName;
+                        var message = selectedCategory.HasValue ? I18n.Text($"Удалить выполненные задачи из «{name}»? История остальных разделов сохранится.", $"Delete completed tasks in “{name}”? Other categories will keep their history.") : I18n.Text("Удалить все выполненные задачи? Это действие нельзя отменить.", "Delete all completed tasks? This cannot be undone.");
                         var yes = MessageBox.Show(this, message, "Today", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
                         HasDialog = false;
                         if (yes) Run(() => store.ClearHistory(selectedCategory));
@@ -223,7 +224,7 @@ internal sealed class MainWindow : Window
                 var completed = TaskRules.CompletedToday(matches, DateTimeOffset.Now, TimeZoneInfo.Local).ToList();
                 if (completed.Count > 0)
                 {
-                    rows.Children.Add(Ui.Button($"{(completedExpanded ? "⌄" : "›")} Выполнено · {completed.Count}", "Показать или скрыть выполненные", () => { completedExpanded = !completedExpanded; RenderRows(); }));
+                    rows.Children.Add(Ui.Button($"{(completedExpanded ? "⌄" : "›")} {I18n.Text("Выполнено", "Completed")} · {completed.Count}", I18n.Text("Показать или скрыть выполненные", "Show or hide completed tasks"), () => { completedExpanded = !completedExpanded; RenderRows(); }));
                     if (completedExpanded || !string.IsNullOrWhiteSpace(Search.Text))
                         foreach (var task in completed) { rows.Children.Add(TaskRow(task)); visible.Add(task.Id); }
                 }
@@ -231,7 +232,7 @@ internal sealed class MainWindow : Window
             VisibleTaskIDs = visible;
             if (visible.Count == 0 && !(rows.Children.Count > 0))
             {
-                var empty = Ui.Text(string.IsNullOrWhiteSpace(Search.Text) ? (history ? "История пока пуста" : "Здесь пока нет дел\nДобавьте первую задачу ниже") : "Ничего не найдено\nПопробуйте другой запрос или раздел", 17, "Muted");
+                var empty = Ui.Text(string.IsNullOrWhiteSpace(Search.Text) ? (history ? I18n.Text("История пока пуста", "History is empty") : I18n.Text("Здесь пока нет дел\nДобавьте первую задачу ниже", "No tasks yet\nAdd your first task below")) : I18n.Text("Ничего не найдено\nПопробуйте другой запрос или раздел", "No results\nTry another search or category"), 17, "Muted");
                 empty.Margin = new Thickness(18, 35, 12, 25); empty.TextWrapping = TextWrapping.Wrap; rows.Children.Add(empty);
             }
             list.ScrollToVerticalOffset(offset);
@@ -244,7 +245,7 @@ internal sealed class MainWindow : Window
         var grid = new Grid { Margin = new Thickness(8, 9, 4, 9) };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(30) });
         grid.ColumnDefinitions.Add(new ColumnDefinition()); grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(32) });
-        var check = Ui.Button(task.IsCompleted ? "✓" : "", task.IsCompleted ? "Вернуть задачу" : "Выполнить задачу", () => Run(() => store.Toggle(task.Id)));
+        var check = Ui.Button(task.IsCompleted ? "✓" : "", task.IsCompleted ? I18n.Text("Вернуть задачу", "Restore task") : I18n.Text("Выполнить задачу", "Complete task"), () => Run(() => store.Toggle(task.Id)));
         check.Width = 23; check.Height = 23; check.MinHeight = 23; check.Padding = new Thickness(0); check.FontSize = 15;
         check.VerticalAlignment = VerticalAlignment.Top; check.Margin = new Thickness(0, 4, 7, 0);
         check.SetResourceReference(BorderBrushProperty, "Muted"); grid.Children.Add(check);
@@ -260,7 +261,7 @@ internal sealed class MainWindow : Window
         else
         {
             var editor = new TextBox { Text = drafts.GetValueOrDefault(task.Id, task.Title), AcceptsReturn = true, TextWrapping = TextWrapping.Wrap };
-            Ui.Name(editor, "Текст задачи");
+            Ui.Name(editor, I18n.Text("Текст задачи", "Task text"));
             void Save()
             {
                 var current = store.Tasks.FirstOrDefault(t => t.Id == task.Id);
@@ -279,15 +280,15 @@ internal sealed class MainWindow : Window
         if (task.FlameCount > 0) { var flames = Ui.Flames(task.FlameCount); flames.Margin = new Thickness(0, 0, 8, 0); metadata.Children.Add(flames); }
         if (store.Category(task.CategoryID) is { } category)
         {
-            var label = Ui.Text(category.Name, 12, "Muted"); label.Margin = new Thickness(0, 0, 10, 0); metadata.Children.Add(label);
+            var label = Ui.Text(category.DisplayName, 12, "Muted"); label.Margin = new Thickness(0, 0, 10, 0); metadata.Children.Add(label);
         }
         if (task.DueDate is { } due)
         {
-            var label = Ui.Text((!task.IsCompleted && due < DateTimeOffset.Now ? "Просрочено · " : "") + due.LocalDateTime.ToString("d MMM, HH:mm", CultureInfo.GetCultureInfo("ru-RU")), 12, "Muted");
+            var label = Ui.Text((!task.IsCompleted && due < DateTimeOffset.Now ? I18n.Text("Просрочено · ", "Overdue · ") : "") + due.LocalDateTime.ToString("d MMM, HH:mm", I18n.Culture), 12, "Muted");
             metadata.Children.Add(label);
         }
         body.Children.Add(metadata);
-        var actions = Ui.Button("⋯", "Действия с задачей", () => OpenMenu(TaskMenu(task.Id), grid));
+        var actions = Ui.Button("⋯", I18n.Text("Действия с задачей", "Task actions"), () => OpenMenu(TaskMenu(task.Id), grid));
         actions.Padding = new Thickness(0); actions.VerticalAlignment = VerticalAlignment.Top; Grid.SetColumn(actions, 2); grid.Children.Add(actions);
         var background = new Border { CornerRadius = new CornerRadius(12), Child = grid };
         background.MouseEnter += (_, _) => background.SetResourceReference(Border.BackgroundProperty, "Hover");
@@ -299,7 +300,7 @@ internal sealed class MainWindow : Window
     {
         var task = store.Tasks.First(t => t.Id == id);
         var menu = new ContextMenu();
-        var priority = new MenuItem { Header = "Приоритет" };
+        var priority = new MenuItem { Header = I18n.Text("Приоритет", "Priority") };
         for (var index = 0; index < TaskRules.Priorities.Length; index++)
         {
             var value = TaskRules.Priorities[index];
@@ -309,33 +310,33 @@ internal sealed class MainWindow : Window
             priority.Items.Add(item);
         }
         menu.Items.Add(priority);
-        menu.Items.Add(Ui.Menu(task.DueDate.HasValue ? "Изменить срок…" : "Добавить срок…", () => PickDue(task.DueDate, due => Run(() => store.Update(id, t => t with { DueDate = due })))));
-        if (task.DueDate.HasValue) menu.Items.Add(Ui.Menu("Убрать срок", () => Run(() => store.Update(id, t => t with { DueDate = null }))));
-        var section = new MenuItem { Header = "Раздел" };
-        section.Items.Add(Ui.Menu("Без раздела", () => Run(() => store.Update(id, t => t with { CategoryID = null }))));
+        menu.Items.Add(Ui.Menu(task.DueDate.HasValue ? I18n.Text("Изменить срок…", "Change due date…") : I18n.Text("Добавить срок…", "Add due date…"), () => PickDue(task.DueDate, due => Run(() => store.Update(id, t => t with { DueDate = due })))));
+        if (task.DueDate.HasValue) menu.Items.Add(Ui.Menu(I18n.Text("Убрать срок", "Remove due date"), () => Run(() => store.Update(id, t => t with { DueDate = null }))));
+        var section = new MenuItem { Header = I18n.Text("Раздел", "Category") };
+        section.Items.Add(Ui.Menu(I18n.Text("Без раздела", "No category"), () => Run(() => store.Update(id, t => t with { CategoryID = null }))));
         foreach (var category in store.Categories)
         {
-            var item = Ui.Menu(category.Name, () => Run(() => store.Update(id, t => t with { CategoryID = category.Id })));
+            var item = Ui.Menu(category.DisplayName, () => Run(() => store.Update(id, t => t with { CategoryID = category.Id })));
             item.IsCheckable = true; item.IsChecked = task.CategoryID == category.Id; section.Items.Add(item);
         }
         menu.Items.Add(section); menu.Items.Add(new Separator());
-        menu.Items.Add(Ui.Menu("Скопировать задачу", () => Run(() => Clipboard.SetText(store.Tasks.First(t => t.Id == id).Title), false)));
-        menu.Items.Add(Ui.Menu("Удалить задачу", () => Run(() => store.Delete(id))));
+        menu.Items.Add(Ui.Menu(I18n.Text("Скопировать задачу", "Copy task"), () => Run(() => Clipboard.SetText(store.Tasks.First(t => t.Id == id).Title), false)));
+        menu.Items.Add(Ui.Menu(I18n.Text("Удалить задачу", "Delete task"), () => Run(() => store.Delete(id))));
         return menu;
     }
 
     private ContextMenu CategoryMenu(Action<Guid?> select)
     {
-        var menu = new ContextMenu(); menu.Items.Add(Ui.Menu("Без раздела", () => select(null)));
-        foreach (var category in store.Categories) menu.Items.Add(Ui.Menu(category.Name, () => select(category.Id)));
+        var menu = new ContextMenu(); menu.Items.Add(Ui.Menu(I18n.Text("Без раздела", "No category"), () => select(null)));
+        foreach (var category in store.Categories) menu.Items.Add(Ui.Menu(category.DisplayName, () => select(category.Id)));
         return menu;
     }
     private ContextMenu BuildAppMenu()
     {
         var menu = new ContextMenu();
-        menu.Items.Add(Ui.Menu("Поиск задач      Ctrl+F", () => Search.Focus()));
-        menu.Items.Add(Ui.Menu("Скрыть окно      Esc", Hide));
-        menu.Items.Add(new Separator()); menu.Items.Add(Ui.Menu("Завершить Today", quit)); return menu;
+        menu.Items.Add(Ui.Menu(I18n.Text("Поиск задач      Ctrl+F", "Search tasks      Ctrl+F"), () => Search.Focus()));
+        menu.Items.Add(Ui.Menu(I18n.Text("Скрыть окно      Esc", "Hide window      Esc"), Hide));
+        menu.Items.Add(new Separator()); menu.Items.Add(Ui.Menu(I18n.Text("Завершить Today", "Quit Today"), quit)); return menu;
     }
     private void TrackMenu(ContextMenu menu)
     {
@@ -349,8 +350,8 @@ internal sealed class MainWindow : Window
     }
     private void UpdateComposer()
     {
-        composeCategory.Content = store.Category(newCategory)?.Name ?? "Без раздела";
-        composeDue.Content = newDue?.LocalDateTime.ToString("d MMM, HH:mm", CultureInfo.GetCultureInfo("ru-RU")) ?? "＋ Срок";
+        composeCategory.Content = store.Category(newCategory)?.DisplayName ?? I18n.Text("Без раздела", "No category");
+        composeDue.Content = newDue?.LocalDateTime.ToString("d MMM, HH:mm", I18n.Culture) ?? I18n.Text("＋ Срок", "＋ Due date");
         addButton.IsEnabled = !string.IsNullOrWhiteSpace(Composer.Text);
     }
     internal void AddTask()
@@ -380,7 +381,7 @@ internal sealed class MainWindow : Window
     {
         try { action(); error.Visibility = Visibility.Collapsed; if (refresh) Refresh(); return true; }
         catch (Exception exception) when (exception is System.IO.IOException or UnauthorizedAccessException or ArgumentException or System.Runtime.InteropServices.ExternalException)
-        { error.Text = "Не удалось сохранить изменение. " + exception.Message; error.Visibility = Visibility.Visible; return false; }
+        { error.Text = I18n.Text("Не удалось сохранить изменение. ", "Could not save the change. ") + exception.Message; error.Visibility = Visibility.Visible; return false; }
     }
 
     internal bool ConfirmQuit()
@@ -388,7 +389,7 @@ internal sealed class MainWindow : Window
         foreach (var id in drafts.Keys.Where(id => store.Tasks.All(t => t.Id != id)).ToList()) drafts.Remove(id);
         if (drafts.Count == 0 && string.IsNullOrWhiteSpace(Composer.Text)) return true;
         HasDialog = true;
-        var discard = MessageBox.Show(this, "Есть несохранённый текст. Завершить Today и закрыть черновик?", "Today",
+        var discard = MessageBox.Show(this, I18n.Text("Есть несохранённый текст. Завершить Today и закрыть черновик?", "You have unsaved text. Quit Today and discard the draft?"), "Today",
             MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes;
         HasDialog = false;
         return discard;

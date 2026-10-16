@@ -21,40 +21,40 @@ internal sealed class DeadlineWindow : Window
         selected = (initial?.LocalDateTime ?? DateTime.Today.AddDays(1).AddHours(9)).Date;
         month = new DateTime(selected.Year, selected.Month, 1);
         TimeField.Text = (initial?.LocalDateTime ?? DateTime.Today.AddHours(9)).ToString("HH:mm");
-        Title = "Дата и время"; Width = 360; SizeToContent = SizeToContent.Height;
+        Title = I18n.Text("Дата и время", "Date and time"); Width = 360; SizeToContent = SizeToContent.Height;
         WindowStyle = WindowStyle.None; ResizeMode = ResizeMode.NoResize; ShowInTaskbar = false;
         AllowsTransparency = true; Background = Brushes.Transparent; WindowStartupLocation = WindowStartupLocation.CenterOwner;
         FontFamily = new FontFamily("Segoe UI"); Ui.ApplyTheme(this);
         var body = new StackPanel { Margin = new Thickness(20) };
         var heading = new DockPanel();
-        var cancel = Ui.Button("×", "Закрыть календарь", () => DialogResult = false);
+        var cancel = Ui.Button("×", I18n.Text("Закрыть календарь", "Close calendar"), () => DialogResult = false);
         DockPanel.SetDock(cancel, Dock.Right); heading.Children.Add(cancel);
-        var title = Ui.Text("Дата и время", 21); title.FontWeight = FontWeights.SemiBold; heading.Children.Add(title); body.Children.Add(heading);
+        var title = Ui.Text(I18n.Text("Дата и время", "Date and time"), 21); title.FontWeight = FontWeights.SemiBold; heading.Children.Add(title); body.Children.Add(heading);
         var shortcuts = new System.Windows.Controls.Primitives.UniformGrid { Columns = 3, Margin = new Thickness(0, 12, 0, 14) };
-        foreach (var (label, offset) in new[] { ("Сегодня", 0), ("Завтра", 1), ("+ Неделя", 7) })
+        foreach (var (label, offset) in new[] { (I18n.Text("Сегодня", "Today"), 0), (I18n.Text("Завтра", "Tomorrow"), 1), (I18n.Text("+ Неделя", "+ Week"), 7) })
             shortcuts.Children.Add(Ui.Button(label, label, () => Select(DateTime.Today.AddDays(offset))));
         body.Children.Add(shortcuts);
         var navigation = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
-        var next = Ui.Button("›", "Следующий месяц", () => { month = month.AddMonths(1); RenderDays(); });
-        var previous = Ui.Button("‹", "Предыдущий месяц", () => { month = month.AddMonths(-1); RenderDays(); });
+        var next = Ui.Button("›", I18n.Text("Следующий месяц", "Next month"), () => { month = month.AddMonths(1); RenderDays(); });
+        var previous = Ui.Button("‹", I18n.Text("Предыдущий месяц", "Previous month"), () => { month = month.AddMonths(-1); RenderDays(); });
         DockPanel.SetDock(next, Dock.Right); DockPanel.SetDock(previous, Dock.Right); navigation.Children.Add(next); navigation.Children.Add(previous); navigation.Children.Add(monthLabel); body.Children.Add(navigation);
         var weekdays = new System.Windows.Controls.Primitives.UniformGrid { Columns = 7 };
-        foreach (var name in new[] { "Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс" })
+        foreach (var name in new[] { I18n.Text("Пн", "Mon"), I18n.Text("Вт", "Tue"), I18n.Text("Ср", "Wed"), I18n.Text("Чт", "Thu"), I18n.Text("Пт", "Fri"), I18n.Text("Сб", "Sat"), I18n.Text("Вс", "Sun") })
         { var label = Ui.Text(name, 12, "Muted"); label.HorizontalAlignment = HorizontalAlignment.Center; weekdays.Children.Add(label); }
         body.Children.Add(weekdays); body.Children.Add(days);
         var separator = Ui.Line(); separator.Margin = new Thickness(0, 14, 0, 12); body.Children.Add(separator);
-        body.Children.Add(Ui.Text("Время", 14, "Muted"));
+        body.Children.Add(Ui.Text(I18n.Text("Время", "Time"), 14, "Muted"));
         var clock = new Grid { Margin = new Thickness(0, 8, 0, 6) };
         clock.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) }); clock.ColumnDefinitions.Add(new ColumnDefinition()); clock.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
-        clock.Children.Add(Ui.Button("−", "На 15 минут раньше", () => Step(-15)));
+        clock.Children.Add(Ui.Button("−", I18n.Text("На 15 минут раньше", "15 minutes earlier"), () => Step(-15)));
         var field = Ui.Card(TimeField, 12); field.Margin = new Thickness(8, 0, 8, 0); Grid.SetColumn(field, 1); clock.Children.Add(field);
-        Ui.Name(TimeField, "Время в формате ЧЧ:ММ"); TimeField.ToolTip = "Введите время вручную, например 14:30";
-        var plus = Ui.Button("+", "На 15 минут позже", () => Step(15)); Grid.SetColumn(plus, 2); clock.Children.Add(plus); body.Children.Add(clock);
+        Ui.Name(TimeField, I18n.Text("Время в формате ЧЧ:ММ", "Time in HH:MM format")); TimeField.ToolTip = I18n.Text("Введите время вручную, например 14:30", "Type a time, for example 14:30");
+        var plus = Ui.Button("+", I18n.Text("На 15 минут позже", "15 minutes later"), () => Step(15)); Grid.SetColumn(plus, 2); clock.Children.Add(plus); body.Children.Add(clock);
         feedback.TextWrapping = TextWrapping.Wrap; feedback.Margin = new Thickness(0, 8, 0, 12); body.Children.Add(feedback);
         var bottom = new DockPanel();
-        var done = Ui.Button("Готово", "Сохранить дату и время", Save); done.IsDefault = true; done.SetResourceReference(BackgroundProperty, "Hover");
+        var done = Ui.Button(I18n.Text("Готово", "Done"), I18n.Text("Сохранить дату и время", "Save date and time"), Save); done.IsDefault = true; done.SetResourceReference(BackgroundProperty, "Hover");
         DockPanel.SetDock(done, Dock.Right); bottom.Children.Add(done);
-        if (initial.HasValue) bottom.Children.Add(Ui.Button("Убрать срок", "Убрать срок задачи", () => { Value = null; DialogResult = true; }));
+        if (initial.HasValue) bottom.Children.Add(Ui.Button(I18n.Text("Убрать срок", "Remove due date"), I18n.Text("Убрать срок задачи", "Remove task due date"), () => { Value = null; DialogResult = true; }));
         body.Children.Add(bottom); Content = Ui.Card(body, 24, "Surface");
         PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) { DialogResult = false; e.Handled = true; } };
         RenderDays();
@@ -63,19 +63,19 @@ internal sealed class DeadlineWindow : Window
     private void Select(DateTime value) { selected = value.Date; month = new DateTime(value.Year, value.Month, 1); RenderDays(); }
     private void RenderDays()
     {
-        monthLabel.Text = month.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU")); days.Children.Clear();
+        monthLabel.Text = month.ToString("MMMM yyyy", I18n.Culture); days.Children.Clear();
         var start = month.AddDays(-(((int)month.DayOfWeek + 6) % 7));
         for (var index = 0; index < 42; index++)
         {
             var day = start.AddDays(index);
-            var button = Ui.Button(day.Day.ToString(), day.ToString("D", CultureInfo.GetCultureInfo("ru-RU")), () => Select(day));
+            var button = Ui.Button(day.Day.ToString(), day.ToString("D", I18n.Culture), () => Select(day));
             button.Padding = new Thickness(0); button.Height = 32; button.Margin = new Thickness(1);
             if (day.Month != month.Month) button.SetResourceReference(ForegroundProperty, "Muted");
             if (day == selected) { button.SetResourceReference(BackgroundProperty, "Hover"); button.SetResourceReference(BorderBrushProperty, "Ink"); }
             else if (day == DateTime.Today) button.SetResourceReference(BorderBrushProperty, "Line");
             days.Children.Add(button);
         }
-        feedback.Text = selected.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU")) + " · время можно ввести вручную";
+        feedback.Text = selected.ToString("d MMMM yyyy", I18n.Culture) + I18n.Text(" · время можно ввести вручную", " · type a time below");
     }
     private void Step(int minutes)
     {
@@ -99,15 +99,15 @@ internal sealed class TextPrompt : Window
     public string Value => input.Text;
     public TextPrompt()
     {
-        Title = "Новый раздел"; Width = 340; SizeToContent = SizeToContent.Height; ResizeMode = ResizeMode.NoResize;
+        Title = I18n.Text("Новый раздел", "New category"); Width = 340; SizeToContent = SizeToContent.Height; ResizeMode = ResizeMode.NoResize;
         WindowStyle = WindowStyle.None; AllowsTransparency = true; Background = Brushes.Transparent;
         ShowInTaskbar = false; WindowStartupLocation = WindowStartupLocation.CenterOwner; FontFamily = new FontFamily("Segoe UI"); Ui.ApplyTheme(this);
         var body = new StackPanel { Margin = new Thickness(20) };
-        body.Children.Add(Ui.Text("Новый раздел", 22));
-        var field = Ui.Card(input, 12); field.Margin = new Thickness(0, 16, 0, 12); body.Children.Add(field); Ui.Name(input, "Название раздела");
+        body.Children.Add(Ui.Text(I18n.Text("Новый раздел", "New category"), 22));
+        var field = Ui.Card(input, 12); field.Margin = new Thickness(0, 16, 0, 12); body.Children.Add(field); Ui.Name(input, I18n.Text("Название раздела", "Category name"));
         var actions = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        actions.Children.Add(Ui.Button("Отмена", "Отмена", () => DialogResult = false));
-        var add = Ui.Button("Добавить", "Добавить раздел", () => { if (!string.IsNullOrWhiteSpace(Value)) DialogResult = true; });
+        actions.Children.Add(Ui.Button(I18n.Text("Отмена", "Cancel"), I18n.Text("Отмена", "Cancel"), () => DialogResult = false));
+        var add = Ui.Button(I18n.Text("Добавить", "Add"), I18n.Text("Добавить раздел", "Add category"), () => { if (!string.IsNullOrWhiteSpace(Value)) DialogResult = true; });
         add.IsDefault = true; actions.Children.Add(add); body.Children.Add(actions); Content = Ui.Card(body, 24, "Surface");
         Loaded += (_, _) => input.Focus();
         PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape) DialogResult = false; };

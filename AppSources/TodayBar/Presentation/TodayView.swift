@@ -89,7 +89,7 @@ struct TodayView: View {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 9, weight: .medium))
                     .rotationEffect(.degrees(showsCompleted ? 0 : -90))
-                Text("Выполнено")
+                Text(L10n.text("Выполнено", "Completed"))
                 Spacer()
                 Text("\(completedTasks.count)")
                     .monospacedDigit()
@@ -101,7 +101,7 @@ struct TodayView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(showsCompleted ? "Скрыть выполненные" : "Показать выполненные")
+        .accessibilityLabel(showsCompleted ? L10n.text("Скрыть выполненные", "Hide completed") : L10n.text("Показать выполненные", "Show completed"))
     }
 
     private var composer: some View {
@@ -115,7 +115,7 @@ struct TodayView: View {
                 AutoGrowingTextEditor(
                     text: $newTask,
                     height: $composerHeight,
-                    placeholder: "Новое дело…",
+                    placeholder: L10n.text("Новое дело…", "New task…"),
                     minHeight: 38,
                     maxHeight: 112,
                     font: .systemFont(ofSize: 16),
@@ -135,7 +135,7 @@ struct TodayView: View {
                 .buttonStyle(.plain)
                 .allowsHitTesting(!newTask.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .padding(.top, 1)
-                .accessibilityLabel("Добавить дело")
+                .accessibilityLabel(L10n.text("Добавить дело", "Add task"))
             }
             .padding(.horizontal, 13)
             .padding(.top, 11)
@@ -148,15 +148,15 @@ struct TodayView: View {
 
             HStack(spacing: 7) {
                 Menu {
-                    Button("Без раздела") { composerCategoryID = nil }
+                    Button(L10n.text("Без раздела", "No category")) { composerCategoryID = nil }
                     Divider()
                     ForEach(model.categories) { category in
-                        Button(category.name) { composerCategoryID = category.id }
+                        Button(category.displayName) { composerCategoryID = category.id }
                     }
                 } label: {
                     HStack(spacing: 5) {
                         Image(systemName: model.category(for: composerCategoryID)?.systemImage ?? "tray")
-                        Text(model.category(for: composerCategoryID)?.name ?? "Без раздела")
+                        Text(model.category(for: composerCategoryID)?.displayName ?? L10n.text("Без раздела", "No category"))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Image(systemName: "chevron.down")
@@ -178,7 +178,7 @@ struct TodayView: View {
                         if let dueDate {
                             TaskDueDateLabel(dueDate: dueDate, isCompleted: false)
                         } else {
-                            Label("Срок", systemImage: "calendar.badge.plus")
+                            Label(L10n.text("Срок", "Due date"), systemImage: "calendar.badge.plus")
                         }
                     }
                     .foregroundStyle(.secondary)
@@ -195,7 +195,7 @@ struct TodayView: View {
 
                 Spacer()
 
-                Text("↵ добавить  ·  ⇧↵ строка")
+                Text(L10n.text("↵ добавить  ·  ⇧↵ строка", "↵ add  ·  ⇧↵ new line"))
                     .font(.system(size: 10.5))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -237,9 +237,9 @@ private struct EmptyTodayView: View {
             Image(systemName: "checkmark.square")
                 .font(.system(size: 22, weight: .regular))
                 .foregroundStyle(.secondary)
-            Text("На сегодня дел нет")
+            Text(L10n.text("На сегодня дел нет", "No tasks for today"))
                 .font(.system(size: 16, weight: .medium))
-            Text("Добавьте первое дело ниже")
+            Text(L10n.text("Добавьте первое дело ниже", "Add your first task below"))
                 .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
         }

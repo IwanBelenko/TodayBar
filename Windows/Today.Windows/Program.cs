@@ -41,7 +41,7 @@ internal static class Program
         }
         catch (Exception exception)
         {
-            MessageBox.Show("Today не удалось открыть. Сохранённые файлы не удалены.\n\n" + exception.Message,
+            MessageBox.Show(I18n.Text("Today не удалось открыть. Сохранённые файлы не удалены.\n\n", "Today could not open. Your saved files have not been deleted.\n\n") + exception.Message,
                 "Today", MessageBoxButton.OK, MessageBoxImage.Error);
             return 1;
         }
@@ -66,7 +66,7 @@ internal sealed class TrayController : IDisposable
     {
         this.app = app; this.store = store;
         window = new MainWindow(store, Quit); app.MainWindow = window;
-        icon = CreateIcon(); tray = new Forms.NotifyIcon { Icon = icon, Text = "Today — список дел", Visible = true };
+        icon = CreateIcon(); tray = new Forms.NotifyIcon { Icon = icon, Text = I18n.Text("Today — список дел", "Today — tasks"), Visible = true };
         BindActivation(tray, () => { if (window.IsVisible) Hide(); else Show(); }, Show);
         var menu = new Forms.ContextMenuStrip();
         var startup = new Forms.ToolStripMenuItem("Launch at Startup") { CheckOnClick = false };
@@ -85,11 +85,11 @@ internal sealed class TrayController : IDisposable
                 else key.SetValue("TodayBar", $"\"{Environment.ProcessPath}\" --startup");
             }
             catch (Exception error) when (error is UnauthorizedAccessException or System.Security.SecurityException or IOException)
-            { MessageBox.Show("Не удалось изменить автозапуск. " + error.Message, "Today"); }
+            { MessageBox.Show(I18n.Text("Не удалось изменить автозапуск. ", "Could not change startup settings. ") + error.Message, "Today"); }
         };
-        menu.Items.Add(new Forms.ToolStripMenuItem("Открыть Today", null, (_, _) => Show()));
+        menu.Items.Add(new Forms.ToolStripMenuItem(I18n.Text("Открыть Today", "Open Today"), null, (_, _) => Show()));
         menu.Items.Add(startup); menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add(new Forms.ToolStripMenuItem("Завершить Today", null, (_, _) => Quit()));
+        menu.Items.Add(new Forms.ToolStripMenuItem(I18n.Text("Завершить Today", "Quit Today"), null, (_, _) => Quit()));
         tray.ContextMenuStrip = menu;
         window.Deactivated += (_, _) =>
         {
@@ -150,9 +150,9 @@ internal sealed class TrayController : IDisposable
             !reminded.Contains($"{t.Id}:{t.DueDate:O}")).ToList();
         if (due.Count == 0) return;
         foreach (var task in due) reminded.Add($"{task.Id}:{task.DueDate:O}");
-        var text = due.Count == 1 ? due[0].Title : $"Задач с истёкшим сроком: {due.Count}.\n" + due[0].Title;
+        var text = due.Count == 1 ? due[0].Title : I18n.Text($"Задач с истёкшим сроком: {due.Count}.\n", $"Overdue tasks: {due.Count}.\n") + due[0].Title;
         if (text.Length > 230) text = text[..227] + "…";
-        tray.ShowBalloonTip(10000, "Срок задачи наступил", text, Forms.ToolTipIcon.Info);
+        tray.ShowBalloonTip(10000, I18n.Text("Срок задачи наступил", "Task is due"), text, Forms.ToolTipIcon.Info);
         if (window.IsVisible && !window.IsKeyboardFocusWithin) window.Refresh();
     }
     private static Icon CreateIcon()

@@ -92,7 +92,10 @@ final class TaskListViewModel: ObservableObject {
     func addCategory(named name: String) -> TaskCategory? {
         let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleaned.isEmpty,
-              !categories.contains(where: { $0.name.localizedCaseInsensitiveCompare(cleaned) == .orderedSame }) else {
+              !categories.contains(where: {
+                  $0.name.localizedCaseInsensitiveCompare(cleaned) == .orderedSame ||
+                  $0.displayName.localizedCaseInsensitiveCompare(cleaned) == .orderedSame
+              }) else {
             return nil
         }
 
@@ -186,7 +189,7 @@ final class TaskListViewModel: ObservableObject {
             tasks.filter { !$0.isCompleted && ($0.dueDate ?? .distantPast) > now() }
                 .forEach(reminderScheduler.schedule)
         } catch {
-            errorMessage = "Не удалось прочитать сохранённые дела."
+            errorMessage = L10n.text("Не удалось прочитать сохранённые дела.", "Could not read saved tasks.")
         }
     }
 
@@ -195,7 +198,7 @@ final class TaskListViewModel: ObservableObject {
             try categoryRepository.save(categories)
             errorMessage = nil
         } catch {
-            errorMessage = "Не удалось сохранить разделы."
+            errorMessage = L10n.text("Не удалось сохранить разделы.", "Could not save categories.")
         }
     }
 
@@ -204,7 +207,7 @@ final class TaskListViewModel: ObservableObject {
             try repository.save(tasks)
             errorMessage = nil
         } catch {
-            errorMessage = "Не удалось сохранить изменения."
+            errorMessage = L10n.text("Не удалось сохранить изменения.", "Could not save changes.")
         }
     }
 }

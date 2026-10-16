@@ -22,7 +22,7 @@ final class NotificationReminderScheduler: ReminderScheduling {
             guard granted else { return }
 
             let content = UNMutableNotificationContent()
-            content.title = "Срок задачи наступил"
+            content.title = L10n.text("Срок задачи наступил", "Task is due")
             content.body = task.title
             content.sound = .default
 

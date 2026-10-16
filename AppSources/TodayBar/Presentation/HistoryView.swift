@@ -43,13 +43,14 @@ struct HistoryView: View {
                 historyFooter
             }
         }
-        .alert("Очистить историю?", isPresented: $confirmClear) {
-            Button("Отмена", role: .cancel) {}
-            Button("Очистить", role: .destructive) { model.clearHistory(categoryID: selectedCategoryID) }
+        .alert(L10n.text("Очистить историю?", "Clear history?"), isPresented: $confirmClear) {
+            Button(L10n.text("Отмена", "Cancel"), role: .cancel) {}
+            Button(L10n.text("Очистить", "Clear"), role: .destructive) { model.clearHistory(categoryID: selectedCategoryID) }
         } message: {
+            let categoryName = model.category(for: selectedCategoryID)?.displayName ?? ""
             Text(selectedCategoryID == nil
-                 ? "Все выполненные дела будут удалены без возможности восстановления."
-                 : "Выполненные дела из раздела «\(model.category(for: selectedCategoryID)?.name ?? "")» будут удалены. История остальных разделов сохранится.")
+                 ? L10n.text("Все выполненные дела будут удалены без возможности восстановления.", "All completed tasks will be permanently deleted.")
+                 : L10n.text("Выполненные дела из раздела «\(categoryName)» будут удалены. История остальных разделов сохранится.", "Completed tasks in “\(categoryName)” will be deleted. Other categories will keep their history."))
         }
     }
 
@@ -58,9 +59,9 @@ struct HistoryView: View {
             Image(systemName: "archivebox")
                 .font(.system(size: 21))
                 .foregroundStyle(.secondary)
-            Text("История пуста")
+            Text(L10n.text("История пуста", "History is empty"))
                 .font(.system(size: 16, weight: .medium))
-            Text("Завершённые дела сохранятся здесь")
+            Text(L10n.text("Завершённые дела сохранятся здесь", "Completed tasks will appear here"))
                 .font(.system(size: 13.5))
                 .foregroundStyle(.secondary)
         }
@@ -96,11 +97,11 @@ struct HistoryView: View {
 
     private var historyFooter: some View {
         HStack {
-            Text(taskFilter.isSearching ? "Найдено: \(matchingTasks.count)" : "Всего выполнено: \(matchingTasks.count)")
+            Text(taskFilter.isSearching ? L10n.text("Найдено: \(matchingTasks.count)", "Found: \(matchingTasks.count)") : L10n.text("Всего выполнено: \(matchingTasks.count)", "Total completed: \(matchingTasks.count)"))
                 .monospacedDigit()
             Spacer()
             if !taskFilter.isSearching {
-                Button("Очистить") { confirmClear = true }
+                Button(L10n.text("Очистить", "Clear")) { confirmClear = true }
                     .buttonStyle(.plain)
             }
         }
@@ -115,9 +116,9 @@ struct HistoryView: View {
 
     private func historyDate(_ date: Date) -> String {
         let calendar = Calendar.autoupdatingCurrent
-        if calendar.isDateInToday(date) { return "Сегодня" }
-        if calendar.isDateInYesterday(date) { return "Вчера" }
-        return date.formatted(.dateTime.day().month(.wide).year())
+        if calendar.isDateInToday(date) { return L10n.text("Сегодня", "Today") }
+        if calendar.isDateInYesterday(date) { return L10n.text("Вчера", "Yesterday") }
+        return date.formatted(.dateTime.day().month(.wide).year().locale(L10n.locale))
     }
 }
 
@@ -143,7 +144,7 @@ private struct HistoryRow: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contextMenu {
-                        Button("Скопировать задачу") {
+                        Button(L10n.text("Скопировать задачу", "Copy task")) {
                             TaskClipboard.copy(task.title)
                         }
                     }
@@ -151,7 +152,7 @@ private struct HistoryRow: View {
                 HStack(spacing: 8) {
                     TaskPriorityIndicator(priority: task.priority)
                     if let category = model.category(for: task.categoryID) {
-                        Label(category.name, systemImage: category.systemImage)
+                        Label(category.displayName, systemImage: category.systemImage)
                             .font(.system(size: 11.5))
                             .foregroundStyle(.secondary)
                     }
@@ -160,7 +161,7 @@ private struct HistoryRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
 
             if let date = task.completedAt {
-                Text(date.formatted(date: .omitted, time: .shortened))
+                Text(date.formatted(.dateTime.hour().minute().locale(L10n.locale)))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .monospacedDigit()

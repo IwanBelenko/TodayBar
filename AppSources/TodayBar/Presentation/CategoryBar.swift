@@ -12,12 +12,12 @@ struct CategoryBar: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                chip(title: "Все", icon: "tray", id: nil)
+                chip(title: L10n.text("Все", "All"), icon: "tray", id: nil)
                 ForEach(model.categories) { category in
-                    chip(title: category.name, icon: category.systemImage, id: category.id)
+                    chip(title: category.displayName, icon: category.systemImage, id: category.id)
                         .contextMenu {
                             if category.id != TaskCategory.workID && category.id != TaskCategory.personalID {
-                                Button("Удалить раздел", role: .destructive) {
+                                Button(L10n.text("Удалить раздел", "Delete category"), role: .destructive) {
                                     categoryToDelete = category
                                     showsDeleteConfirmation = true
                                 }
@@ -31,7 +31,7 @@ struct CategoryBar: View {
                         .background(TodayPalette.hover, in: Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Новый раздел")
+                .help(L10n.text("Новый раздел", "New category"))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
@@ -39,22 +39,22 @@ struct CategoryBar: View {
         .overlay(alignment: .bottom) {
             Rectangle().fill(TodayPalette.line).frame(height: 0.5)
         }
-        .alert("Новый раздел", isPresented: $showsNewCategory) {
-            TextField("Название", text: $newCategoryName)
-            Button("Отмена", role: .cancel) { newCategoryName = "" }
-            Button("Добавить") {
+        .alert(L10n.text("Новый раздел", "New category"), isPresented: $showsNewCategory) {
+            TextField(L10n.text("Название", "Name"), text: $newCategoryName)
+            Button(L10n.text("Отмена", "Cancel"), role: .cancel) { newCategoryName = "" }
+            Button(L10n.text("Добавить", "Add")) {
                 if let category = model.addCategory(named: newCategoryName) { selectedCategoryID = category.id }
                 newCategoryName = ""
             }
-        } message: { Text("Например: Учёба, Дом или Покупки") }
-        .alert("Удалить раздел?", isPresented: $showsDeleteConfirmation, presenting: categoryToDelete) { category in
-            Button("Отмена", role: .cancel) { categoryToDelete = nil }
-            Button("Удалить", role: .destructive) {
+        } message: { Text(L10n.text("Например: Учёба, Дом или Покупки", "For example: Study, Home or Shopping")) }
+        .alert(L10n.text("Удалить раздел?", "Delete category?"), isPresented: $showsDeleteConfirmation, presenting: categoryToDelete) { category in
+            Button(L10n.text("Отмена", "Cancel"), role: .cancel) { categoryToDelete = nil }
+            Button(L10n.text("Удалить", "Delete"), role: .destructive) {
                 model.deleteCategory(id: category.id)
                 if selectedCategoryID == category.id { selectedCategoryID = nil }
                 categoryToDelete = nil
             }
-        } message: { category in Text("Задачи из «\(category.name)» останутся в списке без раздела.") }
+        } message: { category in Text(L10n.text("Задачи из «\(category.displayName)» останутся в списке без раздела.", "Tasks in “\(category.displayName)” will be kept without a category.")) }
     }
 
     private func chip(title: String, icon: String, id: UUID?) -> some View {

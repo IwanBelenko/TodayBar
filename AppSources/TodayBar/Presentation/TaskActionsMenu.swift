@@ -9,7 +9,7 @@ struct TaskActionsMenu: View {
     var body: some View {
         Menu {
             Menu {
-                Picker("Приоритет", selection: Binding(
+                Picker(L10n.text("Приоритет", "Priority"), selection: Binding(
                     get: { task.priority },
                     set: { model.updatePriority(id: task.id, priority: $0) }
                 )) {
@@ -20,34 +20,34 @@ struct TaskActionsMenu: View {
                 }
                 .pickerStyle(.inline)
             } label: {
-                Label("Приоритет", systemImage: "flame")
+                Label(L10n.text("Приоритет", "Priority"), systemImage: "flame")
             }
 
             if !task.isCompleted {
                 Button {
                     DispatchQueue.main.async { showsDeadlinePicker = true }
                 } label: {
-                    Label(task.dueDate == nil ? "Добавить срок…" : "Изменить срок…", systemImage: "calendar")
+                    Label(task.dueDate == nil ? L10n.text("Добавить срок…", "Add due date…") : L10n.text("Изменить срок…", "Change due date…"), systemImage: "calendar")
                 }
                 if task.dueDate != nil {
-                    Button("Убрать срок") { model.updateDueDate(id: task.id, dueDate: nil) }
+                    Button(L10n.text("Убрать срок", "Remove due date")) { model.updateDueDate(id: task.id, dueDate: nil) }
                 }
             }
 
             Menu {
-                Picker("Раздел", selection: Binding(
+                Picker(L10n.text("Раздел", "Category"), selection: Binding(
                     get: { task.categoryID },
                     set: { model.updateCategory(id: task.id, categoryID: $0) }
                 )) {
-                    Text("Без раздела").tag(nil as UUID?)
+                    Text(L10n.text("Без раздела", "No category")).tag(nil as UUID?)
                     ForEach(model.categories) { category in
-                        Label(category.name, systemImage: category.systemImage)
+                        Label(category.displayName, systemImage: category.systemImage)
                             .tag(Optional(category.id))
                     }
                 }
                 .pickerStyle(.inline)
             } label: {
-                Label("Раздел", systemImage: "folder")
+                Label(L10n.text("Раздел", "Category"), systemImage: "folder")
             }
 
             Divider()
@@ -55,7 +55,7 @@ struct TaskActionsMenu: View {
             Button {
                 TaskClipboard.copy(task.title)
             } label: {
-                Label("Скопировать задачу", systemImage: "doc.on.doc")
+                Label(L10n.text("Скопировать задачу", "Copy task"), systemImage: "doc.on.doc")
             }
 
             Divider()
@@ -65,7 +65,7 @@ struct TaskActionsMenu: View {
                     model.delete(id: task.id)
                 }
             } label: {
-                Label("Удалить задачу", systemImage: "trash")
+                Label(L10n.text("Удалить задачу", "Delete task"), systemImage: "trash")
             }
         } label: {
             Image(systemName: "ellipsis")
@@ -77,8 +77,8 @@ struct TaskActionsMenu: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .help("Действия задачи")
-        .accessibilityLabel("Действия задачи «\(task.title)»")
+        .help(L10n.text("Действия задачи", "Task actions"))
+        .accessibilityLabel(L10n.text("Действия задачи «\(task.title)»", "Actions for “\(task.title)”"))
         .popover(isPresented: $showsDeadlinePicker, arrowEdge: .trailing) {
             DeadlinePickerView(dueDate: Binding(
                 get: { task.dueDate },

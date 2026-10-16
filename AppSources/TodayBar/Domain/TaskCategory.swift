@@ -13,6 +13,14 @@ struct TaskCategory: Codable, Identifiable, Equatable, Hashable {
     var name: String
     var systemImage: String
 
+    var displayName: String {
+        switch id {
+        case Self.workID: return L10n.text("Работа", "Work")
+        case Self.personalID: return L10n.text("Личное", "Personal")
+        default: return name
+        }
+    }
+
     init(id: UUID = UUID(), name: String, systemImage: String = "folder") {
         self.id = id
         self.name = name

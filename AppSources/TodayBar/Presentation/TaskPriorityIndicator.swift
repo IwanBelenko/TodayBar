@@ -14,8 +14,8 @@ struct TaskPriorityIndicator: View {
             .foregroundStyle(.secondary)
             .fixedSize()
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Приоритет: \(priority.title)")
-            .help("Приоритет: \(priority.title)")
+            .accessibilityLabel(L10n.text("Приоритет: \(priority.title)", "Priority: \(priority.title)"))
+            .help(L10n.text("Приоритет: \(priority.title)", "Priority: \(priority.title)"))
         }
     }
 }
